@@ -293,6 +293,9 @@ def getPosProfile():
     printer = None
     posProfile = frappe.db.exists("POS Profile", {"branch": branchName})
     pos_profiles = frappe.get_doc("POS Profile", posProfile)
+    global_defaults = frappe.get_single('Global Defaults')
+    disable_rounded_total = global_defaults.disable_rounded_total
+    
 
     if pos_profiles.branch == branchName:
         pos_profile_name = pos_profiles.name
@@ -336,7 +339,9 @@ def getPosProfile():
         "printer": printer,
         "print_type": print_type,
         "tableAttention": tableAttention,
-        "paid_limit":paid_limit
+        "paid_limit":paid_limit,
+        "disable_rounded_total":disable_rounded_total
+
     }
     return invoice_details
 
