@@ -275,7 +275,7 @@ def sync_order(
     try:
         invoice.save()
     except Exception as e:
-        frappe.throw(_("Error while updtating order",e))
+        frappe.throw(_("Error while updating order",e))
            
 
 
