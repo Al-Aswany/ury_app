@@ -37,7 +37,7 @@ def getRestaurantMenu(pos_profile, table=None):
         if menu:
             menu_items = frappe.get_all(
                 "URY Menu Item",
-                filters={"parent": menu},
+                filters={"parent": menu,"disabled": 0},
                 fields=["item", "item_name", "rate", "special_dish", "disabled","course"],
                 order_by="item_name asc",
             )
@@ -89,7 +89,7 @@ def getRestaurantMenu(pos_profile, table=None):
         else:
             menu_items = frappe.get_all(
                 "URY Menu Item",
-                filters={"parent": menu},
+                filters={"parent": menu,"disabled": 0},
                 fields=["item", "item_name", "rate", "special_dish", "disabled", "course"],
                 order_by="item_name asc",
             )
