@@ -216,7 +216,7 @@ def getPosInvoice(status, limit, limit_start):
                 name, invoice_printed, grand_total, restaurant_table, 
                 cashier, waiter, net_total, posting_time, 
                 total_taxes_and_charges, customer, status, 
-                posting_date, rounded_total, order_type 
+                posting_date, rounded_total, order_type,additional_discount_percentage,discount_amount 
             FROM `tabPOS Invoice` 
             WHERE branch = %s AND status = %s 
             ORDER BY modified desc
@@ -234,7 +234,7 @@ def getPosInvoice(status, limit, limit_start):
                 name, invoice_printed, grand_total, restaurant_table, 
                 cashier, waiter, net_total, posting_time, 
                 total_taxes_and_charges, customer, status, 
-                posting_date, rounded_total, order_type 
+                posting_date, rounded_total, order_type,additional_discount_percentage,discount_amount
             FROM `tabPOS Invoice` 
             WHERE branch = %s AND status = %s 
             ORDER BY modified desc
@@ -306,6 +306,7 @@ def getPosProfile():
         get_cashier = frappe.get_doc("POS Profile", pos_profile_name)
         print_format = pos_profiles.print_format
         paid_limit=pos_profiles.paid_limit
+        enable_discount = pos_profiles.custom_enable_discount
         cashier = get_cashier.applicable_for_users[0].user
         qz_print = pos_profiles.qz_print
         print_type = None
@@ -340,7 +341,8 @@ def getPosProfile():
         "print_type": print_type,
         "tableAttention": tableAttention,
         "paid_limit":paid_limit,
-        "disable_rounded_total":disable_rounded_total
+        "disable_rounded_total":disable_rounded_total,
+        "enable_discount":enable_discount
 
     }
     return invoice_details

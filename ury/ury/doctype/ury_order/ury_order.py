@@ -500,7 +500,7 @@ def cancel_order(invoice_id, reason):
 
 # Method for URY POS
 @frappe.whitelist()
-def make_invoice(customer, payments, cashier, pos_profile, table=None, invoice=None):
+def make_invoice(customer, payments, cashier, pos_profile, additionalDiscount=None, table=None, invoice=None):
     """Make table based on Sales Order"""
     
     order_type =  invoice_name = frappe.get_value("POS Invoice",invoice , "order_type")
@@ -512,6 +512,7 @@ def make_invoice(customer, payments, cashier, pos_profile, table=None, invoice=N
 
     invoice.customer = customer
     invoice.pos_profile = pos_profile
+    invoice.additional_discount_percentage=additionalDiscount
     invoice.calculate_taxes_and_totals()
 
     for pay in invoice.payments:
