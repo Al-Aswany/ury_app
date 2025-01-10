@@ -467,7 +467,8 @@ def validate_pos_close(pos_profile):
             {
                 "posting_date": previous_day.date(),
                 "status": "Open",
-                "pos_profile": pos_profile
+                "pos_profile": pos_profile,
+                "docstatus": 1
             }
         )
     
