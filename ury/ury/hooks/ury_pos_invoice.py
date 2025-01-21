@@ -95,7 +95,6 @@ def pos_invoice_naming(doc, method):
 def order_type_update(doc, method):
     if doc.restaurant_table:
         if not doc.order_type:
-            frappe.throw("Hu")
             is_take_away = frappe.db.get_value(
                 "URY Table", doc.restaurant_table, "is_take_away"
             )

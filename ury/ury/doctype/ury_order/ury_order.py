@@ -170,7 +170,7 @@ def sync_order(
                 lastModifiedTime = datetime.strptime(
                     lastModifiedTime, "%Y-%m-%d %H:%M:%S"
                 )
-        if lastModifiedTime != last_modified_time and not cashier:
+        if lastModifiedTime != last_modified_time:
             frappe.msgprint(
                 title="Order has been modified",
                 indicator="red",
@@ -491,12 +491,15 @@ def cancel_order(invoice_id, reason):
         pass
 
     # Update invoice status
-    frappe.db.set_value(
-        "URY Table",
-        pos_invoice.restaurant_table,
-        {"docstatus": 2, "status": "Cancelled", "cancel_reason": reason},
-    )
-   
+    frappe.db.sql("""
+        UPDATE `tabPOS Invoice Item`
+        SET docstatus = 2
+        WHERE parent = %s
+    """, (invoice_id,))
+
+    frappe.db.set_value("POS Invoice", invoice_id, "docstatus", 2)
+    frappe.db.set_value("POS Invoice", invoice_id, "status", "Cancelled")
+    frappe.db.set_value("POS Invoice", invoice_id, "cancel_reason", reason)
 
 # Method for URY POS
 @frappe.whitelist()
