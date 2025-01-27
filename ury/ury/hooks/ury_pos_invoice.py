@@ -28,6 +28,50 @@ def on_trash(doc, method):
 def validate_invoice(doc, method):
     if doc.waiter == None or doc.waiter == "":
         doc.waiter = doc.modified_by
+    remove_items = frappe.db.get_value("POS Profile", doc.pos_profile, "remove_items")
+    
+    if doc.invoice_printed == 1 and remove_items == 0:
+        # Get the original items from db
+        original_doc = frappe.get_doc("POS Invoice", doc.name)
+        
+        # Create dictionaries to store both quantities and names
+        original_items = {
+            item.item_code: {"qty": item.qty, "name": item.item_name} 
+            for item in original_doc.items
+        }
+        current_items = {
+            item.item_code: {"qty": item.qty, "name": item.item_name} 
+            for item in doc.items
+        }
+          
+        # Check for removed items
+        removed_items = set(original_items.keys()) - set(current_items.keys())
+        
+        # Check for quantity reductions
+        reduced_qty_items = []
+        for item_code, item_data in original_items.items():
+            if (item_code in current_items and 
+                current_items[item_code]["qty"] < item_data["qty"]):
+                reduced_qty_items.append(
+                    f"{item_data['name']} (qty reduced from {item_data['qty']} "
+                    f"to {current_items[item_code]['qty']})"
+                )
+        
+        if removed_items or reduced_qty_items:
+            error_msg = []
+            if removed_items:
+                removed_item_names = [
+                    original_items[item_code]["name"] 
+                    for item_code in removed_items
+                ]
+                error_msg.append(f"Removed items: {', '.join(removed_item_names)}")
+            if reduced_qty_items:
+                error_msg.append(f"Modified quantities: {', '.join(reduced_qty_items)}")
+                
+            frappe.throw(
+                ("Cannot modify items after invoice is printed.\n{0}")
+                .format("\n".join(error_msg))
+            )
 
 
 def validate_customer(doc, method):
