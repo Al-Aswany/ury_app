@@ -290,7 +290,8 @@ def sync_order(
 
     except Exception as e:
         # If an exception occurs (e.g., "kot" app not found), it will be caught here without affect the code execution.
-        pass
+        error_msg = f"KOT Creation Failes {str(e)}"            
+        frappe.log_error(error_msg, "KOT Error")
 
     # table status
     if invoice.invoice_printed == 0:
