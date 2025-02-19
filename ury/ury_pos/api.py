@@ -176,7 +176,7 @@ def getPosInvoice(status, limit, limit_start):
             SELECT 
                 name, invoice_printed, grand_total, restaurant_table, 
                 cashier, waiter, net_total, posting_time, 
-                total_taxes_and_charges, customer, status, 
+                total_taxes_and_charges, customer, status, mobile_number, 
                 posting_date, rounded_total, order_type 
             FROM `tabPOS Invoice` 
             WHERE branch = %s AND status = %s 
@@ -196,7 +196,7 @@ def getPosInvoice(status, limit, limit_start):
             SELECT 
                 name, invoice_printed, grand_total, restaurant_table, 
                 cashier, waiter, net_total, posting_time, 
-                total_taxes_and_charges, customer, status, 
+                total_taxes_and_charges, customer, status, mobile_number, 
                 posting_date, rounded_total, order_type 
             FROM `tabPOS Invoice` 
             WHERE branch = %s AND status = %s 
@@ -215,7 +215,7 @@ def getPosInvoice(status, limit, limit_start):
             SELECT 
                 name, invoice_printed, grand_total, restaurant_table, 
                 cashier, waiter, net_total, posting_time, 
-                total_taxes_and_charges, customer, status, 
+                total_taxes_and_charges, customer, status, mobile_number,
                 posting_date, rounded_total, order_type,additional_discount_percentage,discount_amount 
             FROM `tabPOS Invoice` 
             WHERE branch = %s AND status = %s 
@@ -233,7 +233,7 @@ def getPosInvoice(status, limit, limit_start):
             SELECT 
                 name, invoice_printed, grand_total, restaurant_table, 
                 cashier, waiter, net_total, posting_time, 
-                total_taxes_and_charges, customer, status, 
+                total_taxes_and_charges, customer, status, mobile_number,
                 posting_date, rounded_total, order_type,additional_discount_percentage,discount_amount
             FROM `tabPOS Invoice` 
             WHERE branch = %s AND status = %s 
