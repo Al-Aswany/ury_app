@@ -254,6 +254,25 @@ def getPosInvoice(status, limit, limit_start):
 
 
 @frappe.whitelist()
+def searchPosInvoice(query):
+    if not query:
+        return {"data": [], "next": False}
+
+    query = query.lower()
+    pos_invoices = frappe.get_all(
+        "POS Invoice",
+        or_filters=[
+            ["name", "like", f"%{query}%"],
+            ["customer", "like", f"%{query}%"]
+        ],
+        fields=["name", "customer", "grand_total", "posting_date", "posting_time", "order_type", "restaurant_table","status"],
+        limit_page_length=10 
+    )
+    
+    return {"data": pos_invoices, "next": len(pos_invoices) == 10}
+    
+
+@frappe.whitelist()
 def get_select_field_options():
     options = frappe.get_meta("POS Invoice").get_field("order_type").options
     if options:
