@@ -300,7 +300,8 @@ fixtures = [
                     "Branch-custom_make_unpaid",
                     "Branch-custom_no_taxes",
                     "Price List-restaurant_menu",
-                    "POS Profile-custom_enable_discount"
+                    "POS Profile-custom_enable_discount",
+                    "POS Invoice-custom_comments"
                 },
             ]
         ],

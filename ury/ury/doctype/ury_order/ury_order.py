@@ -196,7 +196,8 @@ def sync_order(
 
     customerdoc = frappe.get_doc("Customer", customer)
     invoice.mobile_number = customerdoc.mobile_number
-
+    if comments:
+        invoice.custom_comments = comments
     invoice.no_of_pax = no_of_pax
     invoice.pos_profile = pos_profile
     invoice.cashier = cashier
