@@ -254,18 +254,27 @@ def getPosInvoice(status, limit, limit_start):
 
 
 @frappe.whitelist()
-def searchPosInvoice(query):
+def searchPosInvoice(query,status):
     if not query:
         return {"data": [], "next": False}
-
     query = query.lower()
+    filters = {"status": "Paid" if status == "Recently Paid" else status}
+    
+    # Add additional conditions for Unbilled status
+    if status == "Unbilled":
+        filters.update({
+            "status":"draft",
+            "restaurant_table": ["not in", [None, ""]],  # Check if restaurant_table has value
+            "invoice_printed": 0  # Check if invoice_printed is 0
+        })
     pos_invoices = frappe.get_all(
         "POS Invoice",
+        filters=filters,           
         or_filters=[
             ["name", "like", f"%{query}%"],
             ["customer", "like", f"%{query}%"]
         ],
-        fields=["name", "customer", "grand_total", "posting_date", "posting_time", "order_type", "restaurant_table","status"],
+        fields=["name", "customer", "grand_total", "posting_date", "posting_time", "order_type", "restaurant_table","status","grand_total","rounded_total","net_total"],
         limit_page_length=10 
     )
     
