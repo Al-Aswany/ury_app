@@ -272,9 +272,10 @@ def searchPosInvoice(query,status):
         filters=filters,           
         or_filters=[
             ["name", "like", f"%{query}%"],
-            ["customer", "like", f"%{query}%"]
+            ["customer", "like", f"%{query}%"],
+            ["mobile_number", "like", f"%{query}%"],
         ],
-        fields=["name", "customer", "grand_total", "posting_date", "posting_time", "order_type", "restaurant_table","status","grand_total","rounded_total","net_total"],
+        fields=["name", "customer", "grand_total", "posting_date", "posting_time", "order_type", "restaurant_table","status","grand_total","rounded_total","net_total","mobile_number"],
         limit_page_length=10 
     )
     
