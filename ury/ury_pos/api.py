@@ -16,7 +16,7 @@ def getTable(room):
 
 
 @frappe.whitelist()
-def getRestaurantMenu(pos_profile, table=None):
+def getRestaurantMenu(pos_profile, room=None, order_type=None):
     menu_items = []
     menu_items_with_image = []
 
@@ -27,86 +27,79 @@ def getRestaurantMenu(pos_profile, table=None):
     cashier = any(
         role.role in user_role for role in pos_profile.role_allowed_for_billing
     )
-
-    if cashier:
-        branch_name = getBranch()
-        menu = frappe.db.get_value(
-            "URY Restaurant", {"branch": branch_name}, "active_menu"
+    branch_name = getBranch()
+    restaurant = frappe.db.get_value("URY Restaurant", {"branch": branch_name}, "name")
+    
+    if cashier and order_type:
+        order_type_wise_menu = frappe.db.get_value(
+            "URY Restaurant", restaurant, "order_type_wise_menu"
         )
-
-        if menu:
-            menu_items = frappe.get_all(
-                "URY Menu Item",
-                filters={"parent": menu,"disabled": 0},
-                fields=["item", "item_name", "rate", "special_dish", "disabled","course"],
-                order_by="item_name asc",
+    
+        if order_type_wise_menu:
+            menu = frappe.db.get_value(
+                "Order Type Menu",
+                {"parent": restaurant, "order_type": order_type},
+                "menu"
             )
-
-            menu_items_with_image = [
-                {
-                    "item": item.item,
-                    "item_name": item.item_name,
-                    "rate": item.rate,
-                    "special_dish": item.special_dish,
-                    "disabled": item.disabled,
-                    "item_imgae": frappe.db.get_value("Item", item.item, "image"),
-                    "course":item.course,
-                }
-                for item in menu_items
-            ]
-
-    elif table:
-        if not table:
-            frappe.throw(_("Please select a table"))
-
-        restaurant, branch, room = frappe.get_value(
-            "URY Table",
-            table,
-            ["restaurant", "branch", "restaurant_room"],
-        )
-
-        room_wise_menu = frappe.db.get_value(
-            "URY Restaurant",
-            restaurant,
-            "room_wise_menu",
-        )
-
-        if not room_wise_menu:
-            menu = frappe.db.get_value("URY Restaurant", restaurant, "active_menu")
-
+            if not menu:
+                 menu = frappe.db.get_value("URY Restaurant", restaurant, "active_menu")
+    
         else:
+            menu = frappe.db.get_value("URY Restaurant", restaurant, "active_menu")
+    
+    elif room:
+    
+        room_wise_menu = frappe.db.get_value(
+            "URY Restaurant", restaurant, "room_wise_menu"
+        )
+        
+        if room_wise_menu:
             menu = frappe.db.get_value(
                 "Menu for Room",
                 {"parent": restaurant, "room": room},
-                "menu",
+                "menu"
             )
-
-        if not menu:
-            frappe.throw(
-                _("Please set an active menu for Restaurant {0}").format(restaurant)
-            )
-
+            if not menu:
+                 menu = frappe.db.get_value("URY Restaurant", restaurant, "active_menu")
         else:
-            menu_items = frappe.get_all(
-                "URY Menu Item",
-                filters={"parent": menu,"disabled": 0},
-                fields=["item", "item_name", "rate", "special_dish", "disabled", "course"],
-                order_by="item_name asc",
-            )
-            menu_items_with_image = [
-                {
-                    "item": item.item,
-                    "item_name": item.item_name,
-                    "rate": item.rate,
-                    "special_dish": item.special_dish,
-                    "disabled": item.disabled,
-                    "item_imgae": frappe.db.get_value("Item", item.item, "image"),
-                    "course":item.course,
-                }
-                for item in menu_items
-            ]
-    return menu_items_with_image
-
+            menu = frappe.db.get_value("URY Restaurant", restaurant, "active_menu")
+    
+    # Default menu if nothing is selected
+    else:
+        menu = frappe.db.get_value("URY Restaurant", restaurant, "active_menu")
+    
+    if not menu:
+        frappe.throw(_("Please set an active menu for Restaurant {0}").format(restaurant))
+    
+    
+    # Get menu items (your existing code)
+    menu_items = frappe.get_all(
+        "URY Menu Item",
+        filters={"parent": menu, "disabled": 0},
+        fields=["item", "item_name", "rate", "special_dish", "disabled", "course"],
+        order_by="item_name asc"
+    )
+    
+    menu_items_with_image = [
+        {
+            "item": item.item,
+            "item_name": item.item_name,
+            "rate": item.rate,
+            "special_dish": item.special_dish,
+            "disabled": item.disabled,
+            "item_imgae": frappe.db.get_value("Item", item.item, "image"),
+            "course": item.course,
+        }
+        for item in menu_items
+    ]
+    modified = frappe.db.get_value("URY Menu", menu, "modified")
+    
+    
+    return {
+        "items": menu_items_with_image,
+        "modified_time": modified,
+        "name": menu
+    }
 
 @frappe.whitelist()
 def getBranch():
