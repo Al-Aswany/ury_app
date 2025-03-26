@@ -127,7 +127,14 @@ doc_events = {
         },
     "Customer": {"before_save": "ury.ury.hooks.ury_customer.before_insert"},
     "Item": {"validate": "ury.ury.hooks.ury_item.validate"},
-    "POS Opening Entry": {"validate":"ury.ury.hooks.ury_pos_opening_entry.set_cashier_room"}
+    "POS Opening Entry": {
+        "validate":"ury.ury.hooks.ury_pos_opening_entry.set_cashier_room",
+        "before_save": "ury.ury.hooks.ury_pos_opening_entry.before_save",
+        },
+    "POS Closing Entry": {
+        "before_save": "ury.ury.hooks.ury_pos_closing_entry.before_save",
+        "validate":"ury.ury.hooks.ury_pos_closing_entry.validate"
+        }    
 }
 
 # Scheduled Tasks
@@ -301,8 +308,26 @@ fixtures = [
                     "Branch-custom_no_taxes",
                     "Price List-restaurant_menu",
                     "POS Profile-custom_enable_discount",
-                    "POS Invoice-custom_comments"
+                    "POS Invoice-custom_comments",
+                    "POS Profile-custom_multiple_cashier_configuration",
+                    "POS Profile-custom_enable_multiple_cashier",
+                    "POS Profile User-custom_main_cashier",
+                    "POS Opening Entry-custom_rooms",
+                    "POS Opening Entry-custom_sub_pos_close_entry",
+                    "POS Closing Entry Detail-custom_closing_amount"
                 },
+            ]
+        ],
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            [
+                "name",
+                "in",
+                {
+                    "POS Closing Entry Detail-closing_amount-label"
+                }
             ]
         ],
     },

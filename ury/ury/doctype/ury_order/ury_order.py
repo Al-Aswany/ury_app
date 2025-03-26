@@ -111,6 +111,7 @@ def get_order_invoice(table=None, invoiceNo=None, order_type=None, is_payment=No
 def sync_order(
     items,
     cashier,
+    owner,
     mode_of_payment,
     customer,
     no_of_pax,
@@ -301,7 +302,7 @@ def sync_order(
             "URY Table", table, {"occupied": 1, "latest_invoice_time": invoice.creation}
         )
 
-    invoice.db_set("owner", cashier)
+    invoice.db_set("owner", owner)
     return invoice.as_dict()
 
 
@@ -393,12 +394,21 @@ def pos_opening_check():
             "pos_profile": None,
         }
     
-    branch,room = getBranchRoom()
-
-    pos_opening_list = frappe.get_all(
-        "POS Opening Entry",
-        filters={"branch": branch, "custom_room":room, "status": "Open", "docstatus": 1},
-    )
+    details = getBranchRoom()
+    room = details[0].get('name')    # 'Beach'
+    branch = details[0].get('branch') # 'Beach'
+    
+    pos_opening_list = frappe.db.sql("""
+        SELECT DISTINCT `tabPOS Opening Entry`.name 
+        FROM `tabPOS Opening Entry`
+        INNER JOIN `tabMultiple Rooms` 
+        ON `tabMultiple Rooms`.parent = `tabPOS Opening Entry`.name
+        WHERE `tabPOS Opening Entry`.branch = %s
+        AND `tabPOS Opening Entry`.status = 'Open'
+        AND `tabPOS Opening Entry`.docstatus = 1
+        AND `tabMultiple Rooms`.room = %s
+    """, (branch, room), as_dict=True)
+    
     
     result = {
         "opening_exists": len(pos_opening_list) > 0,
@@ -530,7 +540,7 @@ def cancel_order(invoice_id, reason):
 
 # Method for URY POS
 @frappe.whitelist()
-def make_invoice(customer, payments, cashier, pos_profile, additionalDiscount=None, table=None, invoice=None):
+def make_invoice(customer, payments, cashier, pos_profile,owner, additionalDiscount=None, table=None, invoice=None):
     """Make table based on Sales Order"""
     
     order_type =  invoice_name = frappe.get_value("POS Invoice",invoice , "order_type")
@@ -553,7 +563,7 @@ def make_invoice(customer, payments, cashier, pos_profile, additionalDiscount=No
             "payments", dict(mode_of_payment=d["mode_of_payment"], amount=d["amount"])
         )
 
-    invoice.owner = cashier
+    invoice.owner = owner
     invoice.save()
     invoice.submit()
 

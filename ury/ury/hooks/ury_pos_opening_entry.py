@@ -3,6 +3,8 @@ import frappe
 def validate(doc,method):
     set_cashier_room(doc,method)
     
+def before_save(doc, method):
+    main_pos_open_check(doc, method)
     
     
 def set_cashier_room(doc,method):
@@ -13,5 +15,37 @@ def set_cashier_room(doc,method):
             """,(doc.branch,doc.user),as_dict=True)
     
     if room:
-        # If there's a result, fetch the custom_room value
         doc.custom_room = room[0]['room']
+        multiple_cashier = frappe.db.get_value("POS Profile",doc.pos_profile,"custom_enable_multiple_cashier")
+        if multiple_cashier:
+            doc.custom_rooms = []
+            for room in room:
+                doc.append('custom_rooms', {
+                    'room': room['room']
+                })
+
+def main_pos_open_check(doc,method):
+    owner = None
+    multiple_cashier = frappe.db.get_value("POS Profile",doc.pos_profile,"custom_enable_multiple_cashier")
+    if multiple_cashier:
+        get_cashier = frappe.get_doc("POS Profile", doc.pos_profile)
+        for user_details in get_cashier.applicable_for_users:
+            if user_details.custom_main_cashier:
+                owner = user_details.user
+
+        if frappe.session.user != owner:
+            pos_opening_list = frappe.get_all(
+                "POS Opening Entry",
+                fields=["name", "docstatus", "status", "posting_date"],
+                filters={"branch": doc.branch,"user":owner},
+            )
+            flag = 1
+            for pos_opening in pos_opening_list:
+                if pos_opening.status == "Open" and pos_opening.docstatus == 1:
+                    flag = 0
+            if flag == 1:
+                frappe.throw(("Main Cashier POS must be open"), title=("Main Cashier POS Required"))
+                
+            return flag
+    else:
+        pass

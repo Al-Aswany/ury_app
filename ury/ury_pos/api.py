@@ -140,8 +140,35 @@ def getBranchRoom():
         if not room_name:
             frappe.throw("No room assigned to this user. Please contact your administrator.")
 
-        return branch_name,room_name
+        return [{
+            "name":room_name ,
+            "branch": branch_name,
+        }]
 
+@frappe.whitelist()
+def getRoom():
+    user = frappe.session.user
+    if user != "Administrator":
+        sql_query = """
+            SELECT b.branch, a.room
+            FROM `tabURY User` AS a
+            INNER JOIN `tabBranch` AS b ON a.parent = b.name
+            WHERE a.user = %s
+        """
+        branch_array = frappe.db.sql(sql_query, user, as_dict=True)
+        
+        if not branch_array:
+            frappe.throw("No branch or room information found for the user. Please contact your administrator.")
+        
+        room_details = [
+            {
+                "name": row.get("room"),
+                "branch": row.get("branch")
+            } 
+            for row in branch_array
+        ]
+
+        return room_details
 
 @frappe.whitelist()
 def getModeOfPayment():
@@ -155,6 +182,95 @@ def getModeOfPayment():
             {"mode_of_payment": mop.mode_of_payment, "opening_amount": float(0)}
         )
     return modeOfPayments
+
+@frappe.whitelist()
+def getInvoiceForCashier(status, cashier, limit, limit_start):
+    branch = getBranch()
+    updatedlist = []
+    limit = int(limit)+1
+    limit_start = int(limit_start)
+    if status == "Draft":
+        invoices = frappe.db.sql(
+            """
+            SELECT 
+                name, invoice_printed, grand_total, restaurant_table, 
+                cashier, waiter, net_total, posting_time, 
+                total_taxes_and_charges, customer, status, mobile_number, 
+                posting_date, rounded_total, order_type 
+            FROM `tabPOS Invoice` 
+            WHERE branch = %s AND status = %s AND cashier = %s
+            AND (invoice_printed = 1 OR (invoice_printed = 0 AND COALESCE(restaurant_table, '') = ''))
+            ORDER BY modified desc
+            LIMIT %s OFFSET %s
+            """,
+            (branch, status, cashier, limit,limit_start),
+            as_dict=True,
+        )
+        updatedlist.extend(invoices)
+    elif status == "Unbilled":
+        
+        docstatus = "Draft"
+        invoices = frappe.db.sql(
+            """
+            SELECT 
+                name, invoice_printed, grand_total, restaurant_table, 
+                cashier, waiter, net_total, posting_time, 
+                total_taxes_and_charges, customer, status, mobile_number, 
+                posting_date, rounded_total, order_type 
+            FROM `tabPOS Invoice` 
+            WHERE branch = %s AND status = %s AND cashier = %s
+            AND (invoice_printed = 0 AND restaurant_table IS NOT NULL)
+            ORDER BY modified desc
+            LIMIT %s OFFSET %s
+            """,
+            (branch, docstatus, cashier, limit, limit_start),
+            as_dict=True,
+        )
+        updatedlist.extend(invoices)
+    elif status == "Recently Paid":
+        docstatus = "Paid"
+        invoices = frappe.db.sql(
+            """
+            SELECT 
+                name, invoice_printed, grand_total, restaurant_table, 
+                cashier, waiter, net_total, posting_time, 
+                total_taxes_and_charges, customer, status, mobile_number,
+                posting_date, rounded_total, order_type,additional_discount_percentage,discount_amount 
+            FROM `tabPOS Invoice` 
+            WHERE branch = %s AND status = %s AND cashier = %s
+            ORDER BY modified desc
+            LIMIT %s OFFSET %s
+            """,
+            (branch, docstatus, cashier, limit, limit_start),
+            as_dict=True,
+        )
+        updatedlist.extend(invoices)    
+    else:
+        
+        invoices = frappe.db.sql(
+            """
+            SELECT 
+                name, invoice_printed, grand_total, restaurant_table, 
+                cashier, waiter, net_total, posting_time, 
+                total_taxes_and_charges, customer, status, mobile_number,
+                posting_date, rounded_total, order_type,additional_discount_percentage,discount_amount
+            FROM `tabPOS Invoice` 
+            WHERE branch = %s AND status = %s AND cashier = %s
+            ORDER BY modified desc
+            LIMIT %s OFFSET %s
+            """,
+            (branch, status, cashier, limit, limit_start),
+            as_dict=True,
+        )
+
+        updatedlist.extend(invoices)
+    if len(updatedlist) == limit and status != "Recently Paid":
+            next = True
+            updatedlist.pop()
+    else:
+            next = False   
+    return  { "data":updatedlist,"next":next}
+
 
 
 @frappe.whitelist()
@@ -305,6 +421,27 @@ def fav_items(customer):
     ]
     return favorite_items
 
+@frappe.whitelist()
+def getCashier(room):
+    branch = getBranch()
+    cashier = None
+    pos_opening_list = frappe.db.sql("""
+        SELECT DISTINCT `tabPOS Opening Entry`.name 
+        FROM `tabPOS Opening Entry`
+        INNER JOIN `tabMultiple Rooms` 
+        ON `tabMultiple Rooms`.parent = `tabPOS Opening Entry`.name
+        WHERE `tabPOS Opening Entry`.branch = %s
+        AND `tabPOS Opening Entry`.status = 'Open'
+        AND `tabPOS Opening Entry`.docstatus = 1
+        AND `tabMultiple Rooms`.room = %s
+    """, (branch, room), as_dict=True)
+    if pos_opening_list:
+        cashier = frappe.db.get_value(
+            "POS Opening Entry",
+            {"name": pos_opening_list[0].name},
+            "user",)
+    return cashier       
+    
 
 @frappe.whitelist()
 def getPosProfile():
@@ -313,6 +450,8 @@ def getPosProfile():
     bill_present = False
     qz_host = None
     printer = None
+    cashier = None
+    owner = None
     posProfile = frappe.db.exists("POS Profile", {"branch": branchName})
     pos_profiles = frappe.get_doc("POS Profile", posProfile)
     global_defaults = frappe.get_single('Global Defaults')
@@ -329,7 +468,42 @@ def getPosProfile():
         print_format = pos_profiles.print_format
         paid_limit=pos_profiles.paid_limit
         enable_discount = pos_profiles.custom_enable_discount
-        cashier = get_cashier.applicable_for_users[0].user
+        multiple_cashier = pos_profiles.custom_enable_multiple_cashier
+        if multiple_cashier:
+            details = getBranchRoom()
+            room = details[0].get('name') 
+            branch = details[0].get('branch')
+
+            pos_opening_list = frappe.db.sql("""
+                SELECT DISTINCT `tabPOS Opening Entry`.name 
+                FROM `tabPOS Opening Entry`
+                INNER JOIN `tabMultiple Rooms` 
+                ON `tabMultiple Rooms`.parent = `tabPOS Opening Entry`.name
+                WHERE `tabPOS Opening Entry`.branch = %s
+                AND `tabPOS Opening Entry`.status = 'Open'
+                AND `tabPOS Opening Entry`.docstatus = 1
+                AND `tabMultiple Rooms`.room = %s
+            """, (branch, room), as_dict=True)
+            if pos_opening_list:
+                pos_opened_cashier = frappe.db.get_value(
+                    "POS Opening Entry",
+                    {"name": pos_opening_list[0].name},
+                    "user",)
+            else:
+                pos_opened_cashier = None
+            for user_details in get_cashier.applicable_for_users:
+                if user_details.custom_main_cashier:
+                    owner = user_details.user
+                
+                if frappe.session.user == owner:
+                    cashier = owner
+                else:
+                    cashier = pos_opened_cashier    
+                
+        else:    
+            cashier = get_cashier.applicable_for_users[0].user
+            owner = get_cashier.applicable_for_users[0].user
+        
         qz_print = pos_profiles.qz_print
         print_type = None
 
@@ -364,7 +538,9 @@ def getPosProfile():
         "tableAttention": tableAttention,
         "paid_limit":paid_limit,
         "disable_rounded_total":disable_rounded_total,
-        "enable_discount":enable_discount
+        "enable_discount":enable_discount,
+        "multiple_cashier":multiple_cashier,
+        "owner":owner
 
     }
 
