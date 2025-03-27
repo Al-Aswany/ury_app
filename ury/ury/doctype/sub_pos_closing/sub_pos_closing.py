@@ -8,11 +8,54 @@ import json
 import requests
 from datetime import datetime
 from ury.ury_pos.api import getBranch
+from frappe.utils import  get_datetime,now
 
 
 class SubPOSClosing(Document):
     def validate(self):
         owner = None
+        branch = frappe.db.get_value("POS Profile", self.pos_profile, "branch")
+
+        draft_invoices = frappe.get_all(
+            "POS Invoice",
+            fields=["name"],
+            filters={"branch": branch, "status": "Draft", "docstatus": "0","cashier":self.user},
+        )
+        if draft_invoices:
+            frappe.throw("Submit/Delete Draft Invoices")
+
+        date_time = now()
+        if isinstance(date_time, str):
+            formatted_date_time = date_time.split('.')[0]
+        else:
+            formatted_date_time = date_time.strftime('%Y-%m-%d %H:%M:%S')
+        self.period_end_date = date_time
+
+        time_part = formatted_date_time.split(' ')[1]
+        self.posting_time = time_part
+        
+        invoices = frappe.get_all(
+            "POS Invoice",
+            filters={
+                "docstatus": 1,
+                "status":"Paid",
+                "posting_date": ["between", [self.period_start_date, self.period_end_date]],
+                "cashier":self.user
+            },
+            fields=["name", "posting_date", "customer", "grand_total", "base_grand_total"]
+        )
+        
+        self.set("pos_transactions", [])
+        
+        for invoice in invoices:
+            self.append("pos_transactions", {
+                "pos_invoice": invoice.name,
+                "posting_date": invoice.posting_date,
+                "customer": invoice.customer,
+                "grand_total": invoice.grand_total,
+                "base_grand_total": invoice.base_grand_total
+            })
+
         multiple_cashier = frappe.db.get_value("POS Profile", self.pos_profile, "custom_enable_multiple_cashier")
         if multiple_cashier:
             get_cashier = frappe.get_doc("POS Profile", self.pos_profile)
