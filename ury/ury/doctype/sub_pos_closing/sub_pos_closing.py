@@ -20,7 +20,7 @@ class SubPOSClosing(Document):
                 if user_details.custom_main_cashier:
                     owner = user_details.user
             if frappe.session.user == owner:
-                frappe.throw("Main Cashier cannot close Sub POS Closing")
+                frappe.throw("The Main Cashier cannot close a Sub POS Closing entry.")
         else:
             pass
     

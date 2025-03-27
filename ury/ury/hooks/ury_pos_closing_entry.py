@@ -5,6 +5,7 @@ def before_save(doc, method):
 
 def validate(doc, method):
     calculate_closing_amount(doc, method)
+    validate_cashier(doc, method)
 
 
 def sub_pos_close_check(doc,method):
@@ -55,3 +56,16 @@ def calculate_closing_amount(doc, method):
             return None
     else:
         pass
+def validate_cashier(doc, method):
+    cashier = None
+    multiple_cashier = frappe.db.get_value("POS Profile",doc.pos_profile,"custom_enable_multiple_cashier")
+    if multiple_cashier:
+        get_cashier = frappe.get_doc("POS Profile", doc.pos_profile)
+        for user_details in get_cashier.applicable_for_users:
+            if not user_details.custom_main_cashier:
+                cashier = user_details.user
+        if frappe.session.user == cashier:
+            frappe.throw("Sub Cashiers are not allowed to make POS Closing Entries.")
+    else:
+        pass
+    
