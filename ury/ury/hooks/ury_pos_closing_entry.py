@@ -52,6 +52,7 @@ def calculate_closing_amount(doc, method):
                 main_closing_amount = closing_details.custom_closing_amount or 0
                 total_closing_amount=sub_closing_amount + main_closing_amount
                 closing_details.closing_amount =total_closing_amount
+                closing_details.difference = total_closing_amount - closing_details.expected_amount
         else:
             frappe.throw("No Sub POS Closing entries found between the given dates")
             return None

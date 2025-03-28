@@ -32,6 +32,8 @@ def set_current_time(doc,method):
     if multiple_cashier:
         date_time = now()
         doc.period_start_date = date_time
+    else:
+        pass
 
 def main_pos_open_check(doc,method):
     owner = None
