@@ -472,13 +472,37 @@ def table_transfer(table, newTable, invoice):
 
 @frappe.whitelist()
 def captain_transfer(currentCaptain, newCaptain, invoice):
-    current_captain_doc = frappe.get_doc("User", currentCaptain)
-    pos_invoice = frappe.get_doc("POS Invoice", invoice)
-    new_captain_doc = frappe.get_doc("User", newCaptain)
+    pos_profile=frappe.get_value("POS Invoice", invoice,"pos_profile")
+    multiple_cashier = frappe.db.get_value("POS Profile",pos_profile,"custom_enable_multiple_cashier")
+    branch=frappe.get_value("POS Invoice", invoice,"branch")
+    if multiple_cashier:
+        table=pos_profile=frappe.get_value("POS Invoice", invoice,"restaurant_table")
+        current_room = frappe.get_value("URY Table", table,"restaurant_room")
+        new_captain_room =  frappe.db.sql("""
+                SELECT room
+                FROM `tabURY User`
+                WHERE parent=%s AND user=%s         
+            """,(branch,newCaptain),as_dict=True)
+        room_match = any(room['room'] == current_room for room in new_captain_room)
+        if not room_match:
+            frappe.throw(_("Captain transfer is not allowed between different rooms"))
+        else:
+            current_captain_doc = frappe.get_doc("User", currentCaptain)
+            pos_invoice = frappe.get_doc("POS Invoice", invoice)
+            new_captain_doc = frappe.get_doc("User", newCaptain)
 
-    # Update the waiter field of the POS Invoice
-    pos_invoice.waiter = new_captain_doc.name
-    pos_invoice.save()
+            # Update the waiter field of the POS Invoice
+            pos_invoice.waiter = new_captain_doc.name
+            pos_invoice.save()
+
+    else:
+        current_captain_doc = frappe.get_doc("User", currentCaptain)
+        pos_invoice = frappe.get_doc("POS Invoice", invoice)
+        new_captain_doc = frappe.get_doc("User", newCaptain)
+
+        # Update the waiter field of the POS Invoice
+        pos_invoice.waiter = new_captain_doc.name
+        pos_invoice.save()
 
 
 @frappe.whitelist()
