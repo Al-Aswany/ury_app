@@ -27,7 +27,6 @@
   "grand_total",
   "net_total",
   "total_quantity",
-  "amended_from",
   "amended_from"
  ],
  "fields": [
@@ -186,7 +185,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-26 03:40:02.290820",
+ "modified": "2025-04-02 18:58:48.902980",
  "modified_by": "Administrator",
  "module": "URY",
  "name": "Sub POS Closing",
