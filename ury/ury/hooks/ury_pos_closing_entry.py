@@ -48,10 +48,10 @@ def calculate_closing_amount(doc, method):
         )
         if sub_pos_closing:
             for closing_details in doc.payment_reconciliation:
-                sub_closing_amount=frappe.db.get_value("Sub POS Closing Payment",{"parent":sub_pos_closing[0].name,"mode_of_payment":closing_details.mode_of_payment},"closing_amount")
+                sub_closing_amount = frappe.db.get_value("Sub POS Closing Payment",{"parent":sub_pos_closing[0].name,"mode_of_payment":closing_details.mode_of_payment},"closing_amount") or 0
                 main_closing_amount = closing_details.custom_closing_amount or 0
-                total_closing_amount=sub_closing_amount + main_closing_amount
-                closing_details.closing_amount =total_closing_amount
+                total_closing_amount = sub_closing_amount + main_closing_amount
+                closing_details.closing_amount = total_closing_amount
                 closing_details.difference = total_closing_amount - closing_details.expected_amount
         else:
             frappe.throw("No Sub POS Closing entries found between the given dates")
