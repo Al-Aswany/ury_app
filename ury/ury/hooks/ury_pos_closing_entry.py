@@ -40,7 +40,7 @@ def calculate_closing_amount(doc, method):
         sub_pos_closing = frappe.get_all(
             "Sub POS Closing",
             filters=[
-                ["posting_date", ">=", doc.posting_date],
+                ["posting_date", "<=", doc.posting_date],
                 ["period_start_date", ">=", doc.period_start_date],
                 ["docstatus", "=", 1]
             ],
