@@ -634,6 +634,7 @@ def getAggregatorItem(aggregator):
             "item_imgae": frappe.db.get_value("Item", item.item, "image"),
         }
         for item in aggregatorItem
+        if not frappe.db.get_value("Item", item.item_code, "disabled")
     ]
     return aggregatorItemList
 
