@@ -469,6 +469,7 @@ def getPosProfile():
         paid_limit=pos_profiles.paid_limit
         enable_discount = pos_profiles.custom_enable_discount
         multiple_cashier = pos_profiles.custom_enable_multiple_cashier
+        edit_order_type = pos_profiles.custom_edit_order_type
         if multiple_cashier:
             details = getBranchRoom()
             room = details[0].get('name') 
@@ -540,7 +541,8 @@ def getPosProfile():
         "disable_rounded_total":disable_rounded_total,
         "enable_discount":enable_discount,
         "multiple_cashier":multiple_cashier,
-        "owner":owner
+        "owner":owner,
+        "edit_order_type":edit_order_type
 
     }
 
