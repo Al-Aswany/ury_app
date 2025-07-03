@@ -1,0 +1,274 @@
+import { create } from 'zustand';
+import { v4 as uuidv4 } from 'uuid';
+import { storage } from '../lib/storage';
+import { menuData } from '../data/menu-data';
+
+export type OrderType = 'dine-in' | 'takeaway' | 'delivery' | 'aggregator';
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  image: string;
+  trending?: boolean;
+  popular?: boolean;
+  recommended?: boolean;
+  description?: string;
+  variants?: {
+    id: string;
+    name: string;
+    price: number;
+  }[];
+  addons?: {
+    id: string;
+    name: string;
+    price: number;
+    category: 'sides' | 'drinks' | 'desserts';
+  }[];
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export interface OrderItem extends MenuItem {
+  quantity: number;
+  selectedVariant?: { id: string; name: string; price: number };
+  selectedAddons?: { id: string; name: string; price: number }[];
+  uniqueId?: string;
+}
+
+export interface PaymentMode {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface Order {
+  id: string;
+  cartId: string;
+  customerId?: string;
+  paymentModeId: string;
+  paymentMode: string;
+  orderType: OrderType;
+  status: 'pending' | 'paid' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  totalAmount: number;
+  paidAmount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const customers: Customer[] = [
+  {
+    id: '1',
+    name: 'Hafni Anusha',
+    email: 'hafni@example.com',
+    phone: '9876543210'
+  },
+  {
+    id: '2',
+    name: 'Fairoos',
+    email: 'fairoos@example.com',
+    phone: '9876543211'
+  },
+  {
+    id: '3',
+    name: 'Jezlan',
+    email: 'jezlan@example.com',
+    phone: '9876543212'
+  },
+  {
+    id: '4',
+    name: 'Jabir',
+    email: 'jabir@example.com',
+    phone: '9876543213'
+  }
+];
+
+export const categories: string[] = [
+  'Breakfast',
+  'Lunch',
+  'Burgers',
+  'Salads',
+  'Pizza',
+  'Sides'
+];
+
+interface POSState {
+  menuItems: MenuItem[];
+  categories: string[];
+  activeOrders: OrderItem[];
+  selectedCategory: string;
+  searchQuery: string;
+  selectedCustomer: Customer | null;
+  selectedTable: string | null;
+  quickFilter: 'all' | 'trending' | 'popular' | 'recommended';
+  selectedItem: MenuItem | null;
+  cartId: string | null;
+  loading: boolean;
+  error: string | null;
+  paymentModes: PaymentMode[];
+  orders: Order[];
+  selectedOrderType: OrderType;
+  fetchMenuItems: () => Promise<void>;
+  fetchCategories: () => Promise<void>;
+  fetchPaymentModes: () => Promise<void>;
+  fetchOrders: () => Promise<void>;
+  addToOrder: (item: OrderItem) => Promise<void>;
+  removeFromOrder: (uniqueId: string) => Promise<void>;
+  updateQuantity: (uniqueId: string, quantity: number) => Promise<void>;
+  clearOrder: () => Promise<void>;
+  setSelectedCategory: (category: string) => void;
+  setSearchQuery: (query: string) => void;
+  setSelectedCustomer: (customer: Customer | null) => void;
+  setSelectedTable: (table: string | null) => void;
+  setSelectedOrderType: (type: OrderType) => void;
+  setQuickFilter: (filter: 'all' | 'trending' | 'popular' | 'recommended') => void;
+  setSelectedItem: (item: MenuItem | null) => void;
+  initializeCart: () => Promise<void>;
+  processPayment: (paymentModeId: string, amount: number) => Promise<void>;
+  updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
+}
+
+const generateUniqueId = (item: OrderItem): string => {
+  const variantId = item.selectedVariant?.id || 'default';
+  const addonIds = item.selectedAddons?.map(addon => addon.id).sort().join('-') || 'no-addons';
+  return `${item.id}-${variantId}-${addonIds}`;
+};
+
+export const usePOSStore = create<POSState>((set, get) => ({
+  menuItems: [],
+  categories: [],
+  activeOrders: storage.getCartItems(),
+  selectedCategory: '',
+  selectedTable: null,
+  searchQuery: '',
+  selectedCustomer: null,
+  selectedOrderType: 'dine-in' as OrderType,
+  quickFilter: 'all',
+  selectedItem: null,
+  cartId: uuidv4(),
+  loading: false,
+  error: null,
+  paymentModes: [
+    { id: 'cash', name: 'Cash', enabled: true },
+    { id: 'card', name: 'Card', enabled: true },
+    { id: 'upi', name: 'UPI', enabled: true }
+  ],
+  orders: [],
+
+  fetchMenuItems: async () => {
+    try {
+      set({ loading: true, error: null });
+      set({ menuItems: menuData, loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
+  },
+
+  fetchCategories: async () => {
+    const uniqueCategories = [...new Set(menuData.map(item => item.category))];
+    set({ categories: uniqueCategories });
+  },
+
+  fetchPaymentModes: async () => {
+    // Payment modes are now static
+  },
+
+  fetchOrders: async () => {
+    try {
+      const orders = storage.getOrders();
+      set({ orders });
+    } catch (error) {
+      set({ error: (error as Error).message });
+    }
+  },
+
+  initializeCart: async () => {
+    set({ cartId: uuidv4() });
+  },
+
+  addToOrder: async (item) => {
+    const uniqueId = generateUniqueId(item);
+    const newOrders = [...get().activeOrders, { ...item, uniqueId }];
+    set({ activeOrders: newOrders });
+    storage.saveCartItems(newOrders);
+  },
+
+  removeFromOrder: async (uniqueId) => {
+    const newOrders = get().activeOrders.filter(item => item.uniqueId !== uniqueId);
+    set({ activeOrders: newOrders });
+    storage.saveCartItems(newOrders);
+  },
+
+  updateQuantity: async (uniqueId, quantity) => {
+    const newOrders = get().activeOrders.map(item => 
+      item.uniqueId === uniqueId ? { ...item, quantity } : item
+    );
+    set({ activeOrders: newOrders });
+    storage.saveCartItems(newOrders);
+  },
+
+  clearOrder: async () => {
+    set({ activeOrders: [] });
+    storage.clearCart();
+  },
+
+  setSelectedCategory: (category) => set({ selectedCategory: category }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSelectedCustomer: (customer) => set({ selectedCustomer: customer }),
+  setSelectedTable: (table) => set({ selectedTable: table }),
+  setSelectedOrderType: (type) => set({ selectedOrderType: type }),
+  setQuickFilter: (filter) => set({ quickFilter: filter }),
+  setSelectedItem: (item) => set({ selectedItem: item }),
+
+  processPayment: async (paymentModeId, amount) => {
+    try {
+      const { activeOrders, cartId, selectedCustomer, selectedOrderType, paymentModes } = get();
+      const paymentMode = paymentModes.find(pm => pm.id === paymentModeId);
+      
+      if (!paymentMode) throw new Error('Invalid payment mode');
+
+      const order: Order = {
+        id: uuidv4(),
+        cartId: cartId!,
+        customerId: selectedCustomer?.id,
+        paymentModeId,
+        paymentMode: paymentMode.name,
+        orderType: selectedOrderType,
+        status: 'paid',
+        totalAmount: amount,
+        paidAmount: amount,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const newOrders = [...get().orders, order];
+      set({ orders: newOrders });
+      storage.saveOrders(newOrders);
+      
+      // Clear cart after successful payment
+      await get().clearOrder();
+    } catch (error) {
+      set({ error: (error as Error).message });
+    }
+  },
+
+  updateOrderStatus: async (orderId, status) => {
+    try {
+      const newOrders = get().orders.map(order => 
+        order.id === orderId 
+          ? { ...order, status, updatedAt: new Date().toISOString() }
+          : order
+      );
+      set({ orders: newOrders });
+      storage.saveOrders(newOrders);
+    } catch (error) {
+      set({ error: (error as Error).message });
+    }
+  }
+})); 
