@@ -169,7 +169,7 @@ const Header = () => {
       <div className="flex items-center justify-between h-16 px-6">
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/pos" className="flex items-center space-x-3">
             <div className="h-10 w-10 bg-primary-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">URY</span>
             </div>
@@ -271,14 +271,14 @@ const Header = () => {
                 </div>
                 <div className="py-2">
                   <Link
-                    to="/settings"
+                    to="/pos/settings"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >
                     <Monitor className="w-4 h-4 mr-3" />
                     Settings
                   </Link>
                   <Link
-                    to="/analytics"
+                    to="/pos/analytics"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >
                     <BarChart3 className="w-4 h-4 mr-3" />

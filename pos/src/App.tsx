@@ -188,7 +188,7 @@ function POSScreen() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/pos">
       <div className="flex flex-col h-screen bg-gray-100 font-inter">
         <Header />
         <Spotlight />
