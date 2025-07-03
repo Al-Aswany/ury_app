@@ -169,11 +169,12 @@ const Header = () => {
       <div className="flex items-center justify-between h-16 px-6">
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/pos" className="flex items-center space-x-3">
-            <div className="h-10 w-10 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">URY</span>
-            </div>
-            <span className="text-xl font-semibold text-gray-900">POS</span>
+        <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src="/assets/ury/pos/ury_pos.png" 
+              alt="URY POS" 
+              className="h-10 w-auto"
+            />
           </Link>
         </div>
 
