@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Percent, Gift, Award, CreditCard, Wallet, QrCode } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
+import { Button, Input, Select, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui';
 
 interface PaymentDialogProps {
   onClose: () => void;
@@ -103,18 +104,20 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ onClose, totalAmount }) =
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row">
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent variant="xlarge" className="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row p-0" showCloseButton={false}>
         {/* Left Column - Discounts and Loyalty */}
         <div className="md:w-1/2 p-6 border-b md:border-b-0 md:border-r border-gray-200 overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Payment</h2>
-            <button
+            <Button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              variant="ghost"
+              size="icon"
+              className="p-2"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
 
           {/* Discount Section */}
@@ -124,27 +127,29 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ onClose, totalAmount }) =
               Apply Discount
             </h3>
             <div className="flex gap-2">
-              <select
+              <Select
                 value={discountType}
                 onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}
-                className="px-3 py-2 border rounded-lg text-sm"
+                size="sm"
               >
                 <option value="percentage">Percentage</option>
                 <option value="fixed">Fixed</option>
-              </select>
-              <input
+              </Select>
+              <Input
                 type="number"
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={discountType === 'percentage' ? 'Enter %' : 'Enter amount'}
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                size="sm"
+                className="flex-1"
               />
-              <button
+              <Button
                 onClick={handleApplyDiscount}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+                variant="default"
+                size="sm"
               >
                 Apply
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -155,19 +160,21 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ onClose, totalAmount }) =
               Apply Coupon
             </h3>
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                 placeholder="Enter coupon code"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                size="sm"
+                className="flex-1"
               />
-              <button
+              <Button
                 onClick={handleApplyCoupon}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+                variant="default"
+                size="sm"
               >
                 Apply
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -206,11 +213,12 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ onClose, totalAmount }) =
             <h3 className="text-lg font-semibold">Payment Method</h3>
             <div className="grid grid-cols-1 gap-3">
               {paymentModes.map((mode) => (
-                <button
+                <Button
                   key={mode.id}
                   onClick={() => setSelectedMode(mode.id)}
+                  variant="outline"
                   className={cn(
-                    'flex items-center gap-3 p-4 border rounded-lg text-left transition-colors',
+                    'flex items-center gap-3 p-4 text-left justify-start transition-colors',
                     selectedMode === mode.id
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
@@ -232,7 +240,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ onClose, totalAmount }) =
                     {mode.id === 'upi' && <QrCode className="w-5 h-5 text-purple-600" />}
                     <span className="font-medium">{mode.name}</span>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -280,21 +288,17 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ onClose, totalAmount }) =
           </div>
 
           {/* Payment Button */}
-          <button
+          <Button
             onClick={handlePayment}
             disabled={isProcessing || !selectedMode}
-            className={cn(
-              'w-full py-3 px-4 rounded-lg font-medium text-white transition-colors',
-              isProcessing || !selectedMode
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            )}
+            variant={isProcessing || !selectedMode ? "secondary" : "default"}
+            className="w-full"
           >
             {isProcessing ? 'Processing...' : `Pay ${formatCurrency(finalTotal)}`}
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

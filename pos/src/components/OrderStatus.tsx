@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Package, Truck, CheckSquare } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { formatCurrency } from '../lib/utils';
+import { Button, Badge, Card, CardContent } from './ui';
 
 const OrderStatus = () => {
   const { orders, fetchOrders, updateOrderStatus } = usePOSStore();
@@ -43,28 +44,22 @@ const OrderStatus = () => {
       {/* Status Filter */}
       <div className="mb-6">
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             onClick={() => setSelectedStatus('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            variant={selectedStatus === 'all' ? 'default' : 'outline'}
+            size="sm"
           >
             All Orders ({orders.length})
-          </button>
+          </Button>
           {Object.entries(statusConfig).map(([status, config]) => (
-            <button
+            <Button
               key={status}
               onClick={() => setSelectedStatus(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedStatus === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              variant={selectedStatus === status ? 'default' : 'outline'}
+              size="sm"
             >
               {config.label} ({orders.filter(o => o.status === status).length})
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -76,10 +71,11 @@ const OrderStatus = () => {
           const Icon = status.icon;
 
           return (
-            <div
+            <Card
               key={order.id}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="hover:shadow-md transition-shadow"
             >
+              <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className={`p-2 rounded-lg ${status.color}`}>
@@ -115,38 +111,43 @@ const OrderStatus = () => {
               <div className="flex flex-wrap gap-2">
                 {order.status === 'pending' && (
                   <>
-                    <button
+                    <Button
                       onClick={() => handleStatusUpdate(order.id, 'preparing')}
-                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                      variant="default"
+                      size="xs"
                     >
                       Start Preparing
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => handleStatusUpdate(order.id, 'cancelled')}
-                      className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                      variant="danger"
+                      size="xs"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </>
                 )}
                 {order.status === 'preparing' && (
-                  <button
+                  <Button
                     onClick={() => handleStatusUpdate(order.id, 'ready')}
-                    className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700"
+                    variant="warning"
+                    size="xs"
                   >
                     Mark Ready
-                  </button>
+                  </Button>
                 )}
                 {order.status === 'ready' && (
-                  <button
+                  <Button
                     onClick={() => handleStatusUpdate(order.id, 'completed')}
-                    className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                    variant="success"
+                    size="xs"
                   >
                     Complete
-                  </button>
+                  </Button>
                 )}
               </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>

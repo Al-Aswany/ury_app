@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { categories, usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
+import { Button, Badge } from './ui';
 
 const categoryIcons = {
   'Breakfast': Coffee,
@@ -43,10 +44,11 @@ const Sidebar = () => {
           </h2>
           
           {/* All Items */}
-          <button
+          <Button
             onClick={() => setSelectedCategory('')}
+            variant="ghost"
             className={cn(
-              'w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group relative mb-1',
+              'w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative mb-1',
               selectedCategory === ''
                 ? 'bg-white text-gray-900 shadow-sm font-semibold'
                 : 'text-gray-700 hover:bg-white/60 hover:text-gray-900'
@@ -62,10 +64,10 @@ const Sidebar = () => {
               <span>All Items</span>
             </div>
             
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full min-w-[24px] text-center">
+            <Badge variant="secondary" size="sm" className="text-xs text-gray-500 bg-gray-100 min-w-[24px] text-center">
               {getAllItemsCount()}
-            </span>
-          </button>
+            </Badge>
+          </Button>
 
           {/* Divider */}
           <div className="h-px bg-gray-200 my-3 mx-1" />
@@ -77,11 +79,12 @@ const Sidebar = () => {
               const count = getCategoryCount(category);
               
               return (
-                <button
+                <Button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
+                  variant="ghost"
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group relative',
+                    'w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative',
                     selectedCategory === category
                       ? 'bg-white text-gray-900 shadow-sm font-semibold'
                       : 'text-gray-700 hover:bg-white/60 hover:text-gray-900'
@@ -97,10 +100,10 @@ const Sidebar = () => {
                     <span>{category}</span>
                   </div>
                   
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                  <Badge variant="secondary" size="sm" className="text-xs text-gray-500 bg-gray-100 min-w-[24px] text-center">
                     {count}
-                  </span>
-                </button>
+                  </Badge>
+                </Button>
               );
             })}
           </div>

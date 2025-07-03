@@ -18,6 +18,7 @@ import {
   Monitor,
   BarChart3
 } from 'lucide-react';
+import { Button, Input, Badge } from './ui';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -180,11 +181,12 @@ const Header = () => {
 
         {/* Search Bar */}
         <div className="flex-1 max-w-2xl mx-8">
-          <button
+          <Button
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-            className="relative w-full flex items-center px-4 py-2 text-left bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+            variant="outline"
+            className="relative w-full flex items-center text-left bg-gray-50 hover:bg-gray-100"
           >
-            <input
+            <Input
               readOnly
               placeholder="Search orders, menu items, or customers..."
               className="w-full bg-transparent border-0 focus:outline-none cursor-pointer"
@@ -194,24 +196,30 @@ const Header = () => {
               <Command className="w-4 h-4" />
               <span>K</span>
             </div>
-          </button>
+          </Button>
         </div>
 
         {/* Right side actions */}
         <div className="flex items-center space-x-4">
           {/* Notifications */}
           <div className="relative" ref={notificationsRef}>
-            <button
+            <Button
               onClick={handleNotificationsToggle}
-              className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              variant="ghost"
+              size="icon"
+              className="relative text-gray-600 hover:text-gray-900"
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                <Badge 
+                  variant="danger" 
+                  size="sm" 
+                  className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center"
+                >
                   {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+                </Badge>
               )}
-            </button>
+            </Button>
 
             {/* Notifications dropdown */}
             {showNotifications && (
@@ -252,16 +260,17 @@ const Header = () => {
 
           {/* User menu */}
           <div className="relative" ref={userMenuRef}>
-            <button
+            <Button
               onClick={handleUserMenuToggle}
-              className="flex items-center space-x-2 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              variant="ghost"
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
             >
               <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
               <span className="text-sm font-medium">Admin</span>
               <ChevronDown className="w-4 h-4" />
-            </button>
+            </Button>
 
             {/* User dropdown */}
             {showUserMenu && (
@@ -285,10 +294,13 @@ const Header = () => {
                     <BarChart3 className="w-4 h-4 mr-3" />
                     Analytics
                   </Link>
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                  <Button
+                    variant="ghost"
+                    className="flex items-center w-full justify-start text-sm text-gray-700"
+                  >
                     <LogOut className="w-4 h-4 mr-3" />
                     Sign out
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

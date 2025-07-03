@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { MenuItem, OrderItem, usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui';
 
 interface ProductDialogProps {
   onClose: () => void;
@@ -91,10 +92,12 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div 
+    <Dialog open={true} onOpenChange={handleClose}>
+      <DialogContent 
         ref={dialogRef}
-        className="bg-white rounded-lg w-full max-w-[90rem] max-h-[90vh] flex flex-col md:flex-row"
+        variant="xlarge"
+        className="bg-white w-full max-w-[90rem] max-h-[90vh] flex flex-col md:flex-row p-0"
+        showCloseButton={false}
       >
         {/* Left Column - Image and Basic Info */}
         <div className="md:w-1/3 relative">
@@ -103,12 +106,14 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
             alt={selectedItem.name}
             className="w-full h-64 md:h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
           />
-          <button
+          <Button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
+            variant="outline"
+            size="icon"
+            className="absolute top-4 right-4 bg-white shadow-lg"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Middle Column - Variants and Quantity */}
@@ -123,11 +128,12 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               <h3 className="text-lg font-semibold mb-3">Choose your size</h3>
               <div className="space-y-2">
                 {selectedItem.variants.map(variant => (
-                  <button
+                  <Button
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
+                    variant="outline"
                     className={cn(
-                      'w-full p-3 rounded-lg border text-left',
+                      'w-full p-3 text-left justify-start',
                       selectedVariant?.id === variant.id
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-blue-200'
@@ -137,7 +143,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                       <span className="font-medium">{variant.name}</span>
                       <span>{formatCurrency(variant.price)}</span>
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -146,19 +152,23 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-3">Quantity</h3>
             <div className="flex items-center space-x-4">
-              <button
+              <Button
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                variant="outline"
+                size="icon"
+                className="w-10 h-10 rounded-full"
               >
                 -
-              </button>
+              </Button>
               <span className="text-lg font-medium">{quantity}</span>
-              <button
+              <Button
                 onClick={() => setQuantity(q => q + 1)}
-                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                variant="outline"
+                size="icon"
+                className="w-10 h-10 rounded-full"
               >
                 +
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -177,11 +187,12 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                     <div key={category} className="space-y-2">
                       <h4 className="font-medium capitalize">{category}</h4>
                       {categoryAddons.map(addon => (
-                        <button
+                        <Button
                           key={addon.id}
                           onClick={() => handleAddonToggle(addon)}
+                          variant="outline"
                           className={cn(
-                            'w-full p-3 rounded-lg border text-left',
+                            'w-full p-3 text-left justify-start',
                             selectedAddons.some(item => item.id === addon.id)
                               ? 'border-blue-500 bg-blue-50'
                               : 'border-gray-200 hover:border-blue-200'
@@ -191,7 +202,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                             <span>{addon.name}</span>
                             <span>+{formatCurrency(addon.price)}</span>
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   );
@@ -205,16 +216,17 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               <span className="text-lg font-semibold">Total</span>
               <span className="text-lg font-semibold">{formatCurrency(total)}</span>
             </div>
-            <button
+            <Button
               onClick={handleAddToOrder}
-              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              variant="default"
+              className="w-full"
             >
               {editMode ? 'Update Order' : 'Add to Order'}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Command, X } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
+import { Button, Input } from './ui';
 
 const Spotlight = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,29 +64,32 @@ const Spotlight = () => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
         <div className="flex items-center border-b border-gray-200 p-4">
           <Search className="w-5 h-5 text-gray-400 mr-3" />
-          <input
+          <Input
             ref={inputRef}
             type="text"
             placeholder="Search menu items..."
-            className="flex-1 outline-none text-lg"
+            className="flex-1 outline-none text-lg border-0 shadow-none focus:ring-0"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <button
+          <Button
             onClick={() => setIsOpen(false)}
-            className="ml-3 p-1 hover:bg-gray-100 rounded"
+            variant="ghost"
+            size="icon"
+            className="ml-3"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         <div className="max-h-96 overflow-y-auto">
           {filteredItems.length > 0 ? (
             filteredItems.map((item, index) => (
-              <button
+              <Button
                 key={item.id}
                 onClick={() => handleSelect(item)}
+                variant="ghost"
                 className={cn(
                   'w-full flex items-center p-4 hover:bg-gray-50 transition-colors',
                   index === selectedIndex && 'bg-blue-50'
@@ -100,10 +104,10 @@ const Spotlight = () => {
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-gray-500">{item.category}</div>
                 </div>
-                <div className="text-right">
-                  <div className="font-medium">₹{item.price}</div>
-                </div>
-              </button>
+                                  <div className="text-right">
+                    <div className="font-medium">₹{item.price}</div>
+                  </div>
+                </Button>
             ))
           ) : (
             <div className="p-4 text-center text-gray-500">

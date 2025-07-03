@@ -6,6 +6,7 @@ import CustomerSelect from './CustomerSelect';
 import ProductDialog from './ProductDialog';
 import OrderTypeSelect from './OrderTypeSelect';
 import PaymentDialog from './PaymentDialog';
+import { Button, Card, CardContent } from './ui';
 
 const OrderPanel = () => {
   const { activeOrders, removeFromOrder, updateQuantity, clearOrder, setSelectedItem } = usePOSStore();
@@ -59,7 +60,7 @@ const OrderPanel = () => {
   );
 
   return (
-    <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-50">
+    <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-10">
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <OrderTypeSelect />
         <div className="mt-3"><CustomerSelect /></div>
@@ -79,13 +80,15 @@ const OrderPanel = () => {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <button
+                      <Button
                         onClick={() => handleEdit(item)}
-                        className="text-blue-600 hover:text-blue-700 p-1"
+                        variant="ghost"
+                        size="icon"
+                        className="text-blue-600 hover:text-blue-700"
                         title="Edit item"
                       >
                         <Edit className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
                     {item.selectedVariant && (
                       <p className="text-sm text-gray-600">{item.selectedVariant.name}</p>
@@ -100,38 +103,46 @@ const OrderPanel = () => {
                   
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
-                      <button
+                      <Button
                         onClick={() => updateQuantity(item.uniqueId!, Math.max(0, item.quantity - 1))}
-                        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100"
+                        variant="outline"
+                        size="icon"
+                        className="w-8 h-8 rounded-full"
                       >
                         -
-                      </button>
+                      </Button>
                       <span className="w-8 text-center">{item.quantity}</span>
-                      <button
+                      <Button
                         onClick={() => updateQuantity(item.uniqueId!, item.quantity + 1)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100"
+                        variant="outline"
+                        size="icon"
+                        className="w-8 h-8 rounded-full"
                       >
                         +
-                      </button>
+                      </Button>
                     </div>
                     
-                    <button
+                    <Button
                       onClick={() => removeFromOrder(item.uniqueId!)}
+                      variant="ghost"
+                      size="icon"
                       className="text-red-500 hover:text-red-600"
                     >
                       <Trash2 className="w-5 h-5" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
             ))}
             {activeOrders.length > 0 && (
-              <button
+              <Button
                 onClick={clearOrder}
-                className="w-full text-sm text-gray-600 hover:text-gray-800 mt-4"
+                variant="ghost"
+                size="sm"
+                className="w-full text-gray-600 hover:text-gray-800 mt-4"
               >
                 Clear cart
-              </button>
+              </Button>
             )}
           </div>
           
@@ -140,12 +151,14 @@ const OrderPanel = () => {
               <span className="text-lg font-semibold">Total</span>
               <span className="text-lg font-semibold">{formatCurrency(total)}</span>
             </div>
-            <button
+            <Button
               onClick={() => setShowPayment(true)}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium transition-colors"
+              variant="default"
+              size="default"
+              className="w-full"
             >
               Checkout
-            </button>
+            </Button>
           </div>
         </>
       )}
