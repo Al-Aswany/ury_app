@@ -2,6 +2,7 @@ import type { OrderItem, Order } from '../store/pos-store';
 
 const CART_STORAGE_KEY = 'ury_pos_cart';
 const ORDERS_STORAGE_KEY = 'ury_pos_orders';
+const POS_PROFILE_FULL_KEY = 'ury_pos_profile_full';
 
 export const storage = {
   saveCartItems: (items: OrderItem[]) => {
@@ -45,6 +46,23 @@ export const storage = {
     } catch (error) {
       console.error('Failed to get orders:', error);
       return [];
+    }
+  },
+
+  savePosProfileFull: (profile: unknown) => {
+    try {
+      sessionStorage.setItem(POS_PROFILE_FULL_KEY, JSON.stringify(profile));
+    } catch (error) {
+      console.error('Failed to save POS Profile:', error);
+    }
+  },
+  getPosProfileFull: () => {
+    try {
+      const profile = sessionStorage.getItem(POS_PROFILE_FULL_KEY);
+      return profile ? JSON.parse(profile) : null;
+    } catch (error) {
+      console.error('Failed to get POS Profile:', error);
+      return null;
     }
   },
 }; 

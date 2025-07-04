@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
 import { menuData } from '../data/menu-data';
+import { getPosProfileLimitedFields, getPosProfileFull, PosProfileLimited, PosProfileFull } from '../lib/pos-profile-api';
 
 export type OrderType = 'dine-in' | 'takeaway' | 'delivery' | 'aggregator';
 
@@ -132,6 +133,9 @@ interface POSState {
   initializeCart: () => Promise<void>;
   processPayment: (paymentModeId: string, amount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
+  posProfileLimited: PosProfileLimited | null;
+  posProfileFull: PosProfileFull | null;
+  fetchPosProfile: () => Promise<void>;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -160,6 +164,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
     { id: 'upi', name: 'UPI', enabled: true }
   ],
   orders: [],
+  posProfileLimited: null,
+  posProfileFull: null,
 
   fetchMenuItems: async () => {
     try {
@@ -269,6 +275,27 @@ export const usePOSStore = create<POSState>((set, get) => ({
       storage.saveOrders(newOrders);
     } catch (error) {
       set({ error: (error as Error).message });
+    }
+  },
+
+  fetchPosProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      // Try sessionStorage first
+      const cached = storage.getPosProfileFull();
+      if (cached) {
+        set({ posProfileFull: cached, loading: false });
+        return;
+      }
+      // Fetch limited fields
+      const limited = await getPosProfileLimitedFields();
+      set({ posProfileLimited: limited });
+      // Fetch full profile
+      const full = await getPosProfileFull(limited.pos_profile);
+      set({ posProfileFull: full, loading: false });
+      storage.savePosProfileFull(full);
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
     }
   }
 })); 
