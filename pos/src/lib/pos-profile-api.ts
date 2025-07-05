@@ -30,8 +30,32 @@ export interface PosProfileLimitedResponse {
 // Full POS Profile response (partial, extend as needed)
 export interface PosProfileFull {
   name: string;
-  branch: string;
+  owner: string;
+  creation: string;
+  modified: string;
+  modified_by: string;
+  docstatus: number;
+  idx: number;
   company: string;
+  customer: string | null;
+  country: string;
+  disabled: number;
+  warehouse: string;
+  campaign: string | null;
+  company_address: string | null;
+  restaurant: string;
+  branch: string;
+  currency: string;
+  // ... other fields
+}
+
+export interface Currency {
+  name: string;
+  symbol: string;
+  fraction: string;
+  fraction_units: number;
+  smallest_currency_fraction_value: number;
+  number_format: string;
 }
 
 export interface PosProfileFullResponse {
@@ -48,3 +72,8 @@ export async function getPosProfileFull(posProfileName: string): Promise<PosProf
   const doc = await db.getDoc(DOCTYPES.POS_PROFILE, posProfileName);
   return doc;
 } 
+
+export async function getCurrencyInfo(currencyCode: string): Promise<Currency> {
+  const doc = await db.getDoc(DOCTYPES.CURRENCY, currencyCode);
+  return doc;
+}

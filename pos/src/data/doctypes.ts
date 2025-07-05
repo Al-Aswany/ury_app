@@ -5,4 +5,5 @@ export const DOCTYPES={
     "CUSTOMER": "Customer",
     "CUSTOMER_GROUP": "Customer Group",
     "CUSTOMER_TERRITORY": "Customer Territory",
+    "CURRENCY": "Currency",
 }

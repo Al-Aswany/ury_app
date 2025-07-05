@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import { formatCurrency } from '../lib/utils';
 
 interface MenuCardProps {
   id: string;
@@ -61,7 +62,7 @@ const MenuCard: FC<MenuCardProps> = ({ id, name, price, item_image, course, onCl
         {/* Price section - pushed to bottom */}
         <div className="mt-auto pt-2">
           <span className="text-sm font-semibold text-gray-900 tabular-nums">
-            ₹{price.toFixed(2)}
+            {formatCurrency(price)}
           </span>
         </div>
       </div>

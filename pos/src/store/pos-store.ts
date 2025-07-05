@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
 import { getRestaurantMenu, getAggregatorMenu, MenuItem as APIMenuItem } from '../lib/menu-api';
-import { getPosProfileLimitedFields, getPosProfileFull, PosProfileFull } from '../lib/pos-profile-api';
+import { getPosProfileLimitedFields, getPosProfileFull, getCurrencyInfo, PosProfileFull } from '../lib/pos-profile-api';
 import { getMenuCourses } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
@@ -70,6 +70,8 @@ interface POSState {
   orders: Order[];
   selectedOrderType: OrderType;
   selectedAggregator: string | null;
+  currency: string;
+  currencySymbol: string | null;
   fetchMenuItems: () => Promise<void>;
   fetchAggregatorMenu: (aggregator: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -95,6 +97,7 @@ interface POSState {
   territories: string[];
   fetchCustomerGroups: () => Promise<void>;
   fetchTerritories: () => Promise<void>;
+  fetchCurrencySymbol: () => Promise<void>;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -116,7 +119,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   selectedItem: null,
   cartId: null,
   loading: false,
-  menuLoading: false, // Initialize menuLoading state
+  menuLoading: false,
   error: null,
   paymentModes: [],
   orders: [],
@@ -124,6 +127,67 @@ export const usePOSStore = create<POSState>((set, get) => ({
   customerGroups: [],
   territories: [],
   selectedAggregator: null,
+  currency: storage.getItem('currency') || 'INR',
+  currencySymbol: storage.getItem('currencySymbol') || null,
+
+  fetchPosProfile: async () => {
+    try {
+      // Check session storage first
+      const cached = sessionStorage.getItem('posProfile');
+      if (cached) {
+        const profile = JSON.parse(cached);
+        set({ 
+          posProfile: profile, 
+          loading: false,
+          currency: profile.currency || 'INR'
+        });
+        // Fetch currency symbol if not in storage
+        if (!storage.getItem('currencySymbol')) {
+          get().fetchCurrencySymbol();
+        }
+        return;
+      }
+
+      set({ loading: true, error: null });
+      const limitedProfile = await getPosProfileLimitedFields();
+      if (!limitedProfile.pos_profile) {
+        throw new Error('No POS profile found');
+      }
+      const fullProfile = await getPosProfileFull(limitedProfile.pos_profile);
+      
+      // Cache the profile in session storage
+      sessionStorage.setItem('posProfile', JSON.stringify(fullProfile));
+      set({ 
+        posProfile: fullProfile, 
+        loading: false,
+        currency: fullProfile.currency
+      });
+      storage.setItem('currency', fullProfile.currency);
+
+      // Fetch currency symbol if not in storage
+      if (!storage.getItem('currencySymbol')) {
+        get().fetchCurrencySymbol();
+      }
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
+  },
+
+  fetchCurrencySymbol: async () => {
+    try {
+      const currency = get().currency;
+      const response = await getCurrencyInfo(currency);
+      const { symbol } = response;
+      
+      set({ currencySymbol: symbol });
+      storage.setItem('currencySymbol', symbol);
+    } catch (error) {
+      console.error('Error fetching currency symbol:', error);
+      // Fallback to currency code if symbol fetch fails
+      set({ currencySymbol: get().currency });
+      storage.setItem('currencySymbol', get().currency);
+    }
+  },
 
   fetchMenuItems: async () => {
     const { posProfile, selectedOrderType } = get();
@@ -278,31 +342,6 @@ export const usePOSStore = create<POSState>((set, get) => ({
       storage.saveOrders(newOrders);
     } catch (error) {
       set({ error: (error as Error).message });
-    }
-  },
-
-  fetchPosProfile: async () => {
-    try {
-      // Check session storage first
-      const cached = sessionStorage.getItem('posProfile');
-      if (cached) {
-        const profile = JSON.parse(cached);
-        set({ posProfile: profile, loading: false });
-        return;
-      }
-
-      set({ loading: true, error: null });
-      const limitedProfile = await getPosProfileLimitedFields();
-      if (!limitedProfile.pos_profile) {
-        throw new Error('No POS profile found');
-      }
-      const fullProfile = await getPosProfileFull(limitedProfile.pos_profile);
-      
-      // Cache the profile in session storage
-      sessionStorage.setItem('posProfile', JSON.stringify(fullProfile));
-      set({ posProfile: fullProfile, loading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, loading: false });
     }
   },
 
