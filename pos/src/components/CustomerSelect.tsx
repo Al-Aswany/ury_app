@@ -12,16 +12,20 @@ function NewCustomerForm({
   onClose, 
   onSuccess, 
   isCreatingCustomer: parentIsCreatingCustomer, 
-  setIsCreatingCustomer: setParentIsCreatingCustomer 
+  setIsCreatingCustomer: setParentIsCreatingCustomer, 
+  prefillName = '',
+  prefillPhone = ''
 }: { 
   onClose: () => void; 
   onSuccess?: () => void;
   isCreatingCustomer?: boolean;
   setIsCreatingCustomer?: React.Dispatch<React.SetStateAction<boolean>>;
+  prefillName?: string;
+  prefillPhone?: string;
 }) {
   const { customerGroups, territories, fetchCustomerGroups, fetchTerritories } = usePOSStore();
-  const [newCustomerName, setNewCustomerName] = React.useState("");
-  const [newCustomerPhone, setNewCustomerPhone] = React.useState("");
+  const [newCustomerName, setNewCustomerName] = React.useState(prefillName);
+  const [newCustomerPhone, setNewCustomerPhone] = React.useState(prefillPhone);
   const [newCustomerGroup, setNewCustomerGroup] = React.useState("");
   const [newCustomerTerritory, setNewCustomerTerritory] = React.useState("");
   const [formError, setFormError] = React.useState(false);
@@ -211,6 +215,8 @@ const CustomerSelect = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { selectedCustomer, setSelectedCustomer } = usePOSStore();
+  const [prefillName, setPrefillName] = useState('');
+  const [prefillPhone, setPrefillPhone] = useState('');
 
   // Debounced search
   useEffect(() => {
@@ -358,12 +364,20 @@ const CustomerSelect = () => {
                   highlightedIndex === searchResults.length ? 'bg-primary-50' : ''
                 }`}
                 onMouseDown={() => {
+                  // Prefill logic
+                  if (/^\d+$/.test(searchTerm.trim())) {
+                    setPrefillPhone(searchTerm.trim());
+                    setPrefillName('');
+                  } else {
+                    setPrefillName(searchTerm.trim());
+                    setPrefillPhone('');
+                  }
                   setShowNewCustomerForm(true);
                   setIsOpen(false);
                 }}
                 onMouseEnter={() => setHighlightedIndex(searchResults.length)}
               >
-                <UserPlus className="w-4 h-4" /> Add New Customer
+                <UserPlus className="w-4 h-4" /> {searchTerm.trim() ? `Add "${searchTerm.trim()}"...` : 'Add New Customer'}
               </button>
             </div>
           )}
@@ -385,6 +399,8 @@ const CustomerSelect = () => {
               onClose={() => setShowNewCustomerForm(false)} 
               isCreatingCustomer={isCreatingCustomer}
               setIsCreatingCustomer={setIsCreatingCustomer}
+              prefillName={prefillName}
+              prefillPhone={prefillPhone}
             />
           </DialogContent>
         </Dialog>
