@@ -11,7 +11,7 @@ import { OrderType } from '../data/order-types';
 export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
   id: string;
   name: string; // map from item_name
-  image: string | undefined; // map from item_image
+  image: string | null; // map from item_image
   price: number; // map from rate
   quantity?: number;
   selectedVariant?: { id: string; name: string; price: number };
@@ -141,7 +141,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         ...item,
         id: item.item,
         name: item.item_name,
-        image: item.item_imgae || undefined,
+        image: item.item_imgae || null,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
         category: item.category
       }));
@@ -162,7 +162,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         ...item,
         id: item.item,
         name: item.item_name,
-        image: item.item_imgae || undefined,
+        image: item.item_imgae || null,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
         category: item.category
       }));
