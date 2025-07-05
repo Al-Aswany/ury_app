@@ -4,6 +4,6 @@ export const DOCTYPES={
     "URY_ROOM": "URY Room",
     "CUSTOMER": "Customer",
     "CUSTOMER_GROUP": "Customer Group",
-    "CUSTOMER_TERRITORY": "Customer Territory",
+    "CUSTOMER_TERRITORY": "Territory",
     "CURRENCY": "Currency",
 }
