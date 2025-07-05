@@ -3,8 +3,8 @@ import { call } from './frappe-sdk';
 export interface MenuItem {
   item: string;
   item_name: string;
-  item_image: string | null;
-  rate: number | string; // Changed from price to rate as per API response
+  item_imgae: string | null;
+  rate: number | string;
   category: string;
   trending?: boolean;
   popular?: boolean;

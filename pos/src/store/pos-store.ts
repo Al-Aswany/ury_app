@@ -52,38 +52,6 @@ export interface Order {
   updatedAt: string;
 }
 
-export const customers: Customer[] = [
-  {
-    id: '1',
-    name: 'Hafni Anusha',
-    phone: '9876543210'
-  },
-  {
-    id: '2',
-    name: 'Fairoos',
-    phone: '9876543211'
-  },
-  {
-    id: '3',
-    name: 'Jezlan',
-    phone: '9876543212'
-  },
-  {
-    id: '4',
-    name: 'Jabir',
-    phone: '9876543213'
-  }
-];
-
-export const categories: string[] = [
-  'Breakfast',
-  'Lunch',
-  'Burgers',
-  'Salads',
-  'Pizza',
-  'Sides'
-];
-
 interface POSState {
   menuItems: MenuItem[];
   categories: string[];
@@ -96,6 +64,7 @@ interface POSState {
   selectedItem: MenuItem | null;
   cartId: string | null;
   loading: boolean;
+  menuLoading: boolean; // Separate loading state for menu
   error: string | null;
   paymentModes: PaymentMode[];
   orders: Order[];
@@ -145,14 +114,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
   selectedOrderType: 'dine-in' as OrderType,
   quickFilter: 'all',
   selectedItem: null,
-  cartId: uuidv4(),
+  cartId: null,
   loading: false,
+  menuLoading: false, // Initialize menuLoading state
   error: null,
-  paymentModes: [
-    { id: 'cash', name: 'Cash', enabled: true },
-    { id: 'card', name: 'Card', enabled: true },
-    { id: 'upi', name: 'UPI', enabled: true }
-  ],
+  paymentModes: [],
   orders: [],
   posProfile: null,
   customerGroups: [],
@@ -167,7 +133,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
     }
 
     try {
-      set({ loading: true, error: null });
+      set({ menuLoading: true, error: null }); // Use menuLoading instead of loading
       const items = await getRestaurantMenu(posProfile.name, selectedOrderType);
       
       // Transform API items to match the UI format
@@ -175,20 +141,20 @@ export const usePOSStore = create<POSState>((set, get) => ({
         ...item,
         id: item.item,
         name: item.item_name,
-        image: item.item_image || undefined,
+        image: item.item_imgae || undefined,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
         category: item.category
       }));
 
-      set({ menuItems, loading: false });
+      set({ menuItems, menuLoading: false }); // Use menuLoading instead of loading
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: (error as Error).message, menuLoading: false }); // Use menuLoading instead of loading
     }
   },
 
   fetchAggregatorMenu: async (aggregator: string) => {
     try {
-      set({ loading: true, error: null });
+      set({ menuLoading: true, error: null }); // Use menuLoading instead of loading
       const items = await getAggregatorMenu(aggregator);
       
       // Transform API items to match the UI format
@@ -196,14 +162,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
         ...item,
         id: item.item,
         name: item.item_name,
-        image: item.item_image || undefined,
+        image: item.item_imgae || undefined,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
         category: item.category
       }));
 
-      set({ menuItems, loading: false });
+      set({ menuItems, menuLoading: false }); // Use menuLoading instead of loading
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: (error as Error).message, menuLoading: false }); // Use menuLoading instead of loading
     }
   },
 
@@ -219,7 +185,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   fetchPaymentModes: async () => {
-    // Payment modes are now static
+    // TODO: Implement payment modes fetch from API
   },
 
   fetchOrders: async () => {
@@ -317,12 +283,23 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
   fetchPosProfile: async () => {
     try {
+      // Check session storage first
+      const cached = sessionStorage.getItem('posProfile');
+      if (cached) {
+        const profile = JSON.parse(cached);
+        set({ posProfile: profile, loading: false });
+        return;
+      }
+
       set({ loading: true, error: null });
       const limitedProfile = await getPosProfileLimitedFields();
       if (!limitedProfile.pos_profile) {
         throw new Error('No POS profile found');
       }
       const fullProfile = await getPosProfileFull(limitedProfile.pos_profile);
+      
+      // Cache the profile in session storage
+      sessionStorage.setItem('posProfile', JSON.stringify(fullProfile));
       set({ posProfile: fullProfile, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
@@ -340,6 +317,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ customerGroups: names });
     sessionStorage.setItem('customerGroups', JSON.stringify(names));
   },
+
   fetchTerritories: async () => {
     const cached = sessionStorage.getItem('territories');
     if (cached) {
