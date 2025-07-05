@@ -9,7 +9,7 @@ import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 
 // Constants
 const MAX_QUANTITY = 99;
-const MIN_QUANTITY = 1;
+const MIN_QUANTITY = 0;
 
 // Custom error class for cart operations
 class CartError extends Error {
@@ -22,12 +22,15 @@ class CartError extends Error {
 // Extend the API MenuItem to include UI-specific properties
 export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
   id: string;
-  name: string; // map from item_name
-  image: string | null; // map from item_image
-  price: number; // map from rate
+  name: string;
+  image: string | null;
+  price: number;
   quantity?: number;
+  description?: string;
+  variants?: Array<{ id: string; name: string; price: number }>;
+  addons?: Array<{ id: string; name: string; price: number; category: 'sides' | 'drinks' | 'desserts' }>;
   selectedVariant?: { id: string; name: string; price: number };
-  selectedAddons?: { id: string; name: string; price: number }[];
+  selectedAddons?: Array<{ id: string; name: string; price: number }>;
   uniqueId?: string;
   tax_rate?: number;
 }
@@ -122,6 +125,7 @@ interface POSState {
   itemExistsInCart: (uniqueId: string) => boolean;
   validateQuantity: (quantity: number) => boolean;
   getItemPrice: (item: OrderItem) => number;
+  getItemQuantityFromCart: (item: MenuItem) => number;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -494,10 +498,16 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   validateQuantity: (quantity: number): boolean => {
-    return quantity >= MIN_QUANTITY && quantity <= MAX_QUANTITY;
+    return !isNaN(quantity) && quantity >= MIN_QUANTITY && quantity <= MAX_QUANTITY;
   },
 
   getItemPrice: (item: OrderItem): number => {
     return calculateItemPrice(item);
+  },
+
+  getItemQuantityFromCart: (item: MenuItem): number => {
+    const uniqueId = generateUniqueId(item as OrderItem);
+    const cartItem = get().activeOrders.find(orderItem => orderItem.uniqueId === uniqueId);
+    return cartItem?.quantity || 0;
   }
 })); 

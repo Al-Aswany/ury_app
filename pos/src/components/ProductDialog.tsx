@@ -1,14 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, Minus } from 'lucide-react';
 import { MenuItem, OrderItem, usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Input } from './ui';
+
+interface Variant {
+  id: string;
+  name: string;
+  price: number;
+}
+
+interface Addon {
+  id: string;
+  name: string;
+  price: number;
+  category: 'sides' | 'drinks' | 'desserts';
+}
 
 interface ProductDialogProps {
   onClose: () => void;
   editMode?: boolean;
-  initialVariant?: { id: string; name: string; price: number };
-  initialAddons?: Array<{ id: string; name: string; price: number }>;
+  initialVariant?: Variant;
+  initialAddons?: Array<Omit<Addon, 'category'>>;
   initialQuantity?: number;
   itemToReplace?: OrderItem;
 }
@@ -18,14 +31,22 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   editMode = false,
   initialVariant,
   initialAddons = [],
-  initialQuantity = 1,
+  initialQuantity,
   itemToReplace
 }) => {
-  const { selectedItem, addToOrder, removeFromOrder, setSelectedItem } = usePOSStore();
-  const [selectedVariant, setSelectedVariant] = useState(initialVariant || selectedItem?.variants?.[0]);
-  const [selectedAddons, setSelectedAddons] = useState<Array<{ id: string; name: string; price: number }>>(initialAddons);
-  const [quantity, setQuantity] = useState(initialQuantity);
+  const { selectedItem, addToOrder, removeFromOrder, setSelectedItem, getItemQuantityFromCart } = usePOSStore();
+  const [selectedVariant, setSelectedVariant] = useState<Variant | undefined>(initialVariant || selectedItem?.variants?.[0]);
+  const [selectedAddons, setSelectedAddons] = useState<Array<Omit<Addon, 'category'>>>(initialAddons);
+  const [quantity, setQuantity] = useState<string>(editMode ? initialQuantity?.toString() || '0' : '0');
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Initialize quantity from cart if not in edit mode
+  useEffect(() => {
+    if (!editMode && selectedItem) {
+      const cartQuantity = getItemQuantityFromCart(selectedItem);
+      setQuantity(cartQuantity.toString());
+    }
+  }, [selectedItem, editMode, getItemQuantityFromCart]);
 
   // Handle click outside to close dialog
   useEffect(() => {
@@ -59,17 +80,49 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
   const basePrice = selectedVariant?.price || selectedItem.price;
   const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
-  const total = (basePrice + addonsTotal) * quantity;
+  const numericQuantity = quantity === '' ? 0 : parseInt(quantity, 10);
+  const total = (basePrice + addonsTotal) * numericQuantity;
+
+  const handleQuantityChange = (value: string) => {
+    // Allow empty string or numbers
+    if (value === '') {
+      setQuantity('');
+      return;
+    }
+
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num >= 0 && num <= 99) {
+      setQuantity(num.toString());
+    }
+  };
+
+  const handleIncrement = () => {
+    const currentNum = quantity === '' ? 0 : parseInt(quantity, 10);
+    if (currentNum < 99) {
+      setQuantity((currentNum + 1).toString());
+    }
+  };
+
+  const handleDecrement = () => {
+    const currentNum = quantity === '' ? 0 : parseInt(quantity, 10);
+    if (currentNum > 0) {
+      setQuantity((currentNum - 1).toString());
+    }
+  };
 
   const handleAddToOrder = () => {
+    const numericQuantity = parseInt(quantity, 10);
+    if (isNaN(numericQuantity) || numericQuantity === 0) {
+      return; // Don't add to order if quantity is 0 or invalid
+    }
+
     if (editMode && itemToReplace?.uniqueId) {
-      // Remove the old item first
       removeFromOrder(itemToReplace.uniqueId);
     }
 
     const orderItem: OrderItem = {
       ...selectedItem,
-      quantity,
+      quantity: numericQuantity,
       selectedVariant,
       selectedAddons,
       price: basePrice
@@ -83,7 +136,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     onClose();
   };
 
-  const handleAddonToggle = (addon: { id: string; name: string; price: number }) => {
+  const handleAddonToggle = (addon: Omit<Addon, 'category'>) => {
     setSelectedAddons(current => 
       current.some(item => item.id === addon.id)
         ? current.filter(item => item.id !== addon.id)
@@ -102,7 +155,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
         {/* Left Column - Image and Basic Info */}
         <div className="md:w-1/3 relative">
           <img
-            src={selectedItem.image}
+            src={selectedItem.image || ''}
             alt={selectedItem.name}
             className="w-full h-64 md:h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
           />
@@ -123,11 +176,11 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
             <p className="text-gray-600 mt-2">{selectedItem.description}</p>
           </div>
 
-          {selectedItem.variants && (
+          {selectedItem.variants && selectedItem.variants.length > 0 && (
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-3">Choose your size</h3>
               <div className="space-y-2">
-                {selectedItem.variants.map(variant => (
+                {selectedItem.variants.map((variant: Variant) => (
                   <Button
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
@@ -151,23 +204,36 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-3">Quantity</h3>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               <Button
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                onClick={handleDecrement}
                 variant="outline"
                 size="icon"
-                className="w-10 h-10 rounded-full"
+                className="h-8 w-8 rounded-full"
               >
-                -
+                <Minus className="h-4 w-4" />
               </Button>
-              <span className="text-lg font-medium">{quantity}</span>
+              <Input
+                type="number"
+                min="0"
+                max="99"
+                value={quantity}
+                onChange={(e) => handleQuantityChange(e.target.value)}
+                onBlur={() => {
+                  // If empty on blur, set to 0
+                  if (quantity === '') {
+                    setQuantity('0');
+                  }
+                }}
+                className="w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
               <Button
-                onClick={() => setQuantity(q => q + 1)}
+                onClick={handleIncrement}
                 variant="outline"
                 size="icon"
-                className="w-10 h-10 rounded-full"
+                className="h-8 w-8 rounded-full"
               >
-                +
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -175,7 +241,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
         {/* Right Column - Add-ons and Order Button */}
         <div className="md:w-1/3 p-6 border-t md:border-t-0 md:border-l border-gray-200 overflow-y-auto">
-          {selectedItem.addons && (
+          {selectedItem.addons && selectedItem.addons.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold mb-3">Add extras</h3>
               <div className="space-y-4">
@@ -186,7 +252,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                   return (
                     <div key={category} className="space-y-2">
                       <h4 className="font-medium capitalize">{category}</h4>
-                      {categoryAddons.map(addon => (
+                      {categoryAddons.map((addon: Addon) => (
                         <Button
                           key={addon.id}
                           onClick={() => handleAddonToggle(addon)}
@@ -199,8 +265,8 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                           )}
                         >
                           <div className="flex justify-between items-center">
-                            <span>{addon.name}</span>
-                            <span>+{formatCurrency(addon.price)}</span>
+                            <span className="font-medium">{addon.name}</span>
+                            <span>{formatCurrency(addon.price)}</span>
                           </div>
                         </Button>
                       ))}
@@ -211,15 +277,16 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
             </div>
           )}
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-semibold">Total</span>
-              <span className="text-lg font-semibold">{formatCurrency(total)}</span>
+          <div className="mt-6">
+            <div className="flex justify-between items-center text-lg font-semibold">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
             </div>
             <Button
               onClick={handleAddToOrder}
-              variant="default"
-              className="w-full"
+              className="w-full mt-4"
+              size="lg"
+              disabled={numericQuantity === 0}
             >
               {editMode ? 'Update Order' : 'Add to Order'}
             </Button>
