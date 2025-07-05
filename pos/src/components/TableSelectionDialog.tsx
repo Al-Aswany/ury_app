@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Circle, Square, RectangleHorizontal } from 'lucide-react';
+import { X, Circle, Square, RectangleHorizontal, AlertTriangle, Loader } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
@@ -27,6 +27,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
   const { selectedTable, setSelectedTable, posProfile } = usePOSStore();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
+  const [tablesCache, setTablesCache] = useState<Record<string, Table[]>>({});
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [loadingTables, setLoadingTables] = useState(false);
@@ -51,25 +52,41 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
       }
     }
     fetchRooms();
-  }, []);
+  }, [posProfile?.branch]);
 
-  // Fetch tables when selectedRoom changes
+  // Fetch tables when selectedRoom changes, but cache per room
   useEffect(() => {
     async function fetchTables() {
       if (!selectedRoom) return;
-      setLoadingTables(true);
       setError(null);
+      // If already cached, use cache
+      if (tablesCache[selectedRoom]) {
+        setTables(tablesCache[selectedRoom]);
+        setLoadingTables(false);
+        return;
+      }
+      setLoadingTables(true);
       try {
         const fetchedTables = await getTables(selectedRoom);
         setTables(fetchedTables);
+        setTablesCache(prev => ({ ...prev, [selectedRoom]: fetchedTables }));
       } catch (e) {
         setError('Failed to load tables');
+        setTables([]);
       } finally {
         setLoadingTables(false);
       }
     }
     fetchTables();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoom]);
+
+  // Clear cache when modal closes
+  useEffect(() => {
+    if (!selectedRoom) {
+      setTablesCache({});
+    }
+  }, [onClose]);
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -83,9 +100,17 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
         <div className="p-4">
           {/* Room Selection */}
           {loadingRooms ? (
-            <div className="mb-6">Loading rooms...</div>
+            <div className="mb-6 text-center text-gray-500">Loading rooms...</div>
           ) : error ? (
-            <div className="mb-6 text-red-500">{error}</div>
+            <div className="mb-6 flex flex-col items-center justify-center gap-2 text-red-500">
+              <AlertTriangle className="w-8 h-8 mb-1" />
+              <span>{error}</span>
+            </div>
+          ) : rooms.length === 0 ? (
+            <div className="mb-6 flex flex-col items-center justify-center gap-2 text-gray-400">
+              <Square className="w-8 h-8 mb-1" />
+              <span>No rooms found</span>
+            </div>
           ) : (
             <div className="flex gap-2 mb-6">
               {rooms.map(room => (
@@ -108,9 +133,20 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
 
           {/* Table Grid */}
           {loadingTables ? (
-            <div>Loading tables...</div>
+            <div className="flex flex-col items-center justify-center gap-2 text-gray-500 mt-8">
+              <Loader className="w-8 h-8 animate-spin mb-1" />
+              <span>Loading tables...</span>
+            </div>
           ) : error ? (
-            <div className="text-red-500">{error}</div>
+            <div className="flex flex-col items-center justify-center gap-2 text-red-500 mt-8">
+              <AlertTriangle className="w-8 h-8 mb-1" />
+              <span>{error}</span>
+            </div>
+          ) : tables.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 text-gray-400 mt-8">
+              <Square className="w-8 h-8 mb-1" />
+              <span>No tables found</span>
+            </div>
           ) : (
             <div className="grid grid-cols-3 gap-4">
               {tables.map(table => (
