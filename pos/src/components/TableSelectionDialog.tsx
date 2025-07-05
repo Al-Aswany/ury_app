@@ -33,17 +33,33 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
   const [loadingTables, setLoadingTables] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch rooms on mount
+  // Fetch rooms on mount with session storage
   useEffect(() => {
     async function fetchRooms() {
       if (!posProfile?.branch) return;
       setLoadingRooms(true);
       setError(null);
+
       try {
-        const fetchedRooms = await getRooms(posProfile.branch);
-        setRooms(fetchedRooms);
-        if (fetchedRooms.length > 0) {
-          setSelectedRoom(fetchedRooms[0].name);
+        // Try to get rooms from session storage first
+        const sessionKey = `ury_rooms_${posProfile.branch}`;
+        const cachedRooms = sessionStorage.getItem(sessionKey);
+        
+        if (cachedRooms) {
+          const parsedRooms = JSON.parse(cachedRooms) as Room[];
+          setRooms(parsedRooms);
+          if (parsedRooms.length > 0) {
+            setSelectedRoom(parsedRooms[0].name);
+          }
+        } else {
+          // If not in session storage, fetch from API
+          const fetchedRooms = await getRooms(posProfile.branch);
+          setRooms(fetchedRooms);
+          if (fetchedRooms.length > 0) {
+            setSelectedRoom(fetchedRooms[0].name);
+          }
+          // Store in session storage
+          sessionStorage.setItem(sessionKey, JSON.stringify(fetchedRooms));
         }
       } catch (e) {
         setError('Failed to load rooms');
