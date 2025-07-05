@@ -315,6 +315,9 @@ const CustomerSelect = () => {
           </div>
           {isOpen && (
             <div className="absolute w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+              {searchTerm.trim() === '' && !isSearching && !searchError && (
+                <div className="p-4 text-center text-gray-400 text-sm select-none">Please type to search...</div>
+              )}
               {isSearching && (
                 <div className="flex items-center justify-center p-4 text-gray-500 text-sm select-none">
                   <Loader className="w-4 h-4 mr-2 animate-spin" /> Searching...
