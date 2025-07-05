@@ -27,6 +27,7 @@ export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
   price: number;
   quantity?: number;
   description?: string;
+  special_dish?: 1 | 0;
   variants?: Array<{ id: string; name: string; price: number }>;
   addons?: Array<{ id: string; name: string; price: number; category: 'sides' | 'drinks' | 'desserts' }>;
   selectedVariant?: { id: string; name: string; price: number };
@@ -83,7 +84,7 @@ interface POSState {
   searchQuery: string;
   selectedCustomer: Customer | null;
   selectedTable: string | null;
-  quickFilter: 'all' | 'trending' | 'popular' | 'recommended';
+  quickFilter: 'all' | 'special';
   selectedItem: MenuItem | null;
   cartId: string | null;
   loading: boolean;
@@ -109,7 +110,7 @@ interface POSState {
   setSelectedCustomer: (customer: Customer | null) => void;
   setSelectedTable: (table: string | null) => void;
   setSelectedOrderType: (type: OrderType) => void;
-  setQuickFilter: (filter: 'all' | 'trending' | 'popular' | 'recommended') => void;
+  setQuickFilter: (filter: 'all' | 'special') => void;
   setSelectedItem: (item: MenuItem | null) => void;
   initializeCart: () => Promise<void>;
   processPayment: (paymentModeId: string, amount: number) => Promise<void>;
@@ -143,7 +144,7 @@ const calculateItemPrice = (item: OrderItem): number => {
 export const usePOSStore = create<POSState>((set, get) => ({
   menuItems: [],
   categories: [],
-  activeOrders: [], // Initialize empty instead of from storage
+  activeOrders: [],
   selectedCategory: '',
   selectedTable: null,
   searchQuery: '',

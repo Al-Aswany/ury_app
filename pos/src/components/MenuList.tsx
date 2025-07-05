@@ -31,9 +31,7 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
         item.name.toLowerCase().includes(searchTerm) ||
         item.item.toLowerCase().includes(searchTerm);
       const matchesFilter = quickFilter === 'all' || 
-        (quickFilter === 'trending' && item.trending) ||
-        (quickFilter === 'popular' && item.popular) ||
-        (quickFilter === 'recommended' && item.recommended);
+        (quickFilter === 'special' && item.special_dish == 1);
       
       return matchesCategory && matchesSearch && matchesFilter;
     });

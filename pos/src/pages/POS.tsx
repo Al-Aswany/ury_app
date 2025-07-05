@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TrendingUp as Trending, Star, ThumbsUp, Loader2 } from 'lucide-react';
+import { Star, Loader2, TrendingUp } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import OrderPanel from '../components/OrderPanel';
 import ProductDialog from '../components/ProductDialog';
@@ -65,7 +65,7 @@ export default function POS() {
   };
 
   const QuickFilterButton = ({ filter, icon: Icon, label }: { 
-    filter: 'all' | 'trending' | 'popular' | 'recommended';
+    filter: 'all' | 'special';
     icon: React.ElementType;
     label: string;
   }) => (
@@ -126,9 +126,7 @@ export default function POS() {
               />
               
               <QuickFilterButton filter="all" icon={Star} label="All" />
-              <QuickFilterButton filter="trending" icon={Trending} label="Trending" />
-              <QuickFilterButton filter="popular" icon={ThumbsUp} label="Popular" />
-              <QuickFilterButton filter="recommended" icon={Star} label="Recommended" />
+              <QuickFilterButton filter="special" icon={TrendingUp} label="Special Items" />
             </div>
           </div>
         </div>
