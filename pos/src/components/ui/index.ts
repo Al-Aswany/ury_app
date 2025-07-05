@@ -1,5 +1,5 @@
 export { Button, buttonVariants } from "./button"
-export { Select, selectVariants } from "./select"
+export { Select, SelectItem, selectVariants } from "./select"
 export { Input, inputVariants } from "./input"
 export { Badge, badgeVariants } from "./badge"
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, cardVariants } from "./card"

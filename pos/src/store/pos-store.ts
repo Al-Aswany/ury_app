@@ -4,6 +4,7 @@ import { storage } from '../lib/storage';
 import { menuData } from '../data/menu-data';
 import { getPosProfileLimitedFields, getPosProfileFull, PosProfileFull } from '../lib/pos-profile-api';
 import { getMenuCourses, MenuCourse } from '../lib/menu-course-api';
+import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { OrderType } from '../data/order-types';
 
 export interface MenuItem {
@@ -135,6 +136,10 @@ interface POSState {
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
   posProfile: PosProfileFull | null;
   fetchPosProfile: () => Promise<void>;
+  customerGroups: string[];
+  territories: string[];
+  fetchCustomerGroups: () => Promise<void>;
+  fetchTerritories: () => Promise<void>;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -164,6 +169,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
   ],
   orders: [],
   posProfile: null,
+  customerGroups: [],
+  territories: [],
 
   fetchMenuItems: async () => {
     try {
@@ -299,5 +306,28 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }
+  },
+
+  fetchCustomerGroups: async () => {
+    const cached = sessionStorage.getItem('customerGroups');
+    if (cached) {
+      set({ customerGroups: JSON.parse(cached) });
+      return;
+    }
+    const groups = await getCustomerGroups();
+    const names = groups.map((g: any) => g.name);
+    set({ customerGroups: names });
+    sessionStorage.setItem('customerGroups', JSON.stringify(names));
+  },
+  fetchTerritories: async () => {
+    const cached = sessionStorage.getItem('territories');
+    if (cached) {
+      set({ territories: JSON.parse(cached) });
+      return;
+    }
+    const terrs = await getCustomerTerritories();
+    const names = terrs.map((t: any) => t.name);
+    set({ territories: names });
+    sessionStorage.setItem('territories', JSON.stringify(names));
   }
 })); 
