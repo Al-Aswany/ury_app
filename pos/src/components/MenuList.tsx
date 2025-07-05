@@ -16,6 +16,7 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
     searchQuery,
     quickFilter,
     fetchMenuItems,
+    setSearchQuery,
   } = usePOSStore();
 
   useEffect(() => {
@@ -57,34 +58,32 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
     );
   }
 
-  if (filteredItems.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-gray-500 text-center">
-          <p className="text-lg font-medium">No items found</p>
-          <p className="text-sm mt-2">Try adjusting your filters or search term</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
       <div className="max-w-screen-xl mx-auto p-4 pb-40">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filteredItems.map((item) => (
-            <MenuCard
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              price={item.price}
-              item_image={item.image}
-              course={item.course}
-              item={item.item}
-              onClick={() => onItemClick(item)}
-            />
-          ))}
-        </div>
+        {filteredItems.length === 0 ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="text-gray-500 text-center">
+              <p className="text-lg font-medium">No items found</p>
+              <p className="text-sm mt-2">Try adjusting your filters or search term</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {filteredItems.map((item) => (
+              <MenuCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                price={item.price}
+                item_image={item.image}
+                course={item.course}
+                item={item.item}
+                onClick={() => onItemClick(item)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

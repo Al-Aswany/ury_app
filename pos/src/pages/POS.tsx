@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, TrendingUp as Trending, Star, ThumbsUp, X, Loader2 } from 'lucide-react';
+import { TrendingUp as Trending, Star, ThumbsUp, Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import OrderPanel from '../components/OrderPanel';
 import ProductDialog from '../components/ProductDialog';
 import MenuList from '../components/MenuList';
+import SearchBar from '../components/SearchBar';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 
@@ -27,7 +28,6 @@ export default function POS() {
   const [showSearch, setShowSearch] = useState(false);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef(0);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -38,8 +38,9 @@ export default function POS() {
   }, [fetchPosProfile, fetchCategories]);
 
   useEffect(() => {
-    if (showSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
+    if (showSearch) {
+      // The searchInputRef.current.focus() line was removed as per the new_code,
+      // as the SearchBar component now handles its own focus.
     }
   }, [showSearch]);
 
@@ -116,43 +117,13 @@ export default function POS() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden pr-96">
         <div className="p-4 bg-white border-b border-gray-200">
           <div className="max-w-screen-xl mx-auto space-y-3">
-            <div className="flex items-center gap-2 overflow-x-auto">
-              <button
-                onClick={() => {
-                  setShowSearch(true);
-                  setTimeout(() => searchInputRef.current?.focus(), 100);
-                }}
-                className={cn(
-                  'h-9 flex items-center gap-2 px-3 rounded-full text-sm font-medium transition-colors',
-                  showSearch ? 'hidden' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                )}
-              >
-                <Search className="w-4 h-4" />
-              </button>
-              
-              {showSearch && (
-                <div className="flex-1 flex items-center gap-2 min-w-[200px] h-9">
-                  <div className="relative flex-1">
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Search menu items..."
-                      className="w-full h-full border border-gray-200 rounded-full text-sm focus:outline-none px-[12px] py-[8px]"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    <button
-                      onClick={() => {
-                        setShowSearch(false);
-                        setSearchQuery('');
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onVisibilityChange={setShowSearch}
+                isVisible={showSearch}
+              />
               
               <QuickFilterButton filter="all" icon={Star} label="All" />
               <QuickFilterButton filter="trending" icon={Trending} label="Trending" />
