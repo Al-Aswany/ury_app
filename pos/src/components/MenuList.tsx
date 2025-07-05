@@ -21,7 +21,7 @@ const MenuList = () => {
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
-      const matchesCategory = !selectedCategory || item.category === selectedCategory;
+      const matchesCategory = !selectedCategory || item.course === selectedCategory;
       const matchesSearch = !searchQuery || 
         item.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = quickFilter === 'all' || 

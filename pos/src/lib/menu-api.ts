@@ -5,7 +5,7 @@ export interface MenuItem {
   item_name: string;
   item_imgae: string | null;
   rate: number | string;
-  category: string;
+  course: string;
   trending?: boolean;
   popular?: boolean;
   recommended?: boolean;

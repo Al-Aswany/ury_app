@@ -143,7 +143,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         name: item.item_name,
         image: item.item_imgae || null,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
-        category: item.category
+        category: item.course
       }));
 
       set({ menuItems, menuLoading: false }); // Use menuLoading instead of loading
@@ -164,7 +164,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         name: item.item_name,
         image: item.item_imgae || null,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
-        category: item.category
+        category: item.course
       }));
 
       set({ menuItems, menuLoading: false }); // Use menuLoading instead of loading
