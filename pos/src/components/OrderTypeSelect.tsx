@@ -4,6 +4,7 @@ import { cn } from '../lib/utils';
 import { Button } from './ui';
 import TableSelectionDialog from './TableSelectionDialog';
 import { DINE_IN, ORDER_TYPES , type OrderType} from '../data/order-types';
+import { HandPlatter } from 'lucide-react';
 
 
 const OrderTypeSelect = () => {
@@ -44,9 +45,9 @@ const OrderTypeSelect = () => {
         <Button
           onClick={() => setShowTableDialog(true)}
           variant="ghost"
-          className="mt-2 text-sm text-primary-600 hover:text-primary-700"
+          className="h-fit w-fit gap-x-2 mt-2 text-sm text-primary-600 hover:text-primary-700"
         >
-          Table {selectedTable}
+          <HandPlatter className="w-4 h-4" /> {selectedTable}
         </Button>
       )}
 
