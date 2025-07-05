@@ -1,19 +1,6 @@
-import { OrderItem, Order } from '../store/pos-store';
+import { Order } from '../store/pos-store';
 
 export const storage = {
-  saveCartItems: (items: OrderItem[]) => {
-    localStorage.setItem('cart_items', JSON.stringify(items));
-  },
-
-  getCartItems: (): OrderItem[] => {
-    const items = localStorage.getItem('cart_items');
-    return items ? JSON.parse(items) : [];
-  },
-
-  clearCart: () => {
-    localStorage.removeItem('cart_items');
-  },
-
   saveOrders: (orders: Order[]) => {
     localStorage.setItem('orders', JSON.stringify(orders));
   },

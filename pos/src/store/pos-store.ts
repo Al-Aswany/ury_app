@@ -143,7 +143,7 @@ const calculateItemPrice = (item: OrderItem): number => {
 export const usePOSStore = create<POSState>((set, get) => ({
   menuItems: [],
   categories: [],
-  activeOrders: storage.getCartItems(),
+  activeOrders: [], // Initialize empty instead of from storage
   selectedCategory: '',
   selectedTable: null,
   searchQuery: '',
@@ -325,12 +325,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
         };
         
         set({ activeOrders: newOrders });
-        storage.saveCartItems(newOrders);
       } else {
         // If item doesn't exist, add it as new
         const newOrders = [...get().activeOrders, { ...item, uniqueId }];
         set({ activeOrders: newOrders });
-        storage.saveCartItems(newOrders);
       }
     } catch (error) {
       if (error instanceof CartError) {
@@ -338,7 +336,6 @@ export const usePOSStore = create<POSState>((set, get) => ({
       } else {
         set({ error: 'Failed to add item to cart' });
       }
-      throw error;
     }
   },
 
@@ -346,49 +343,35 @@ export const usePOSStore = create<POSState>((set, get) => ({
     try {
       const newOrders = get().activeOrders.filter(item => item.uniqueId !== uniqueId);
       set({ activeOrders: newOrders });
-      storage.saveCartItems(newOrders);
     } catch (error) {
       set({ error: 'Failed to remove item from cart' });
-      throw error;
     }
   },
 
   updateQuantity: async (uniqueId: string, quantity: number) => {
     try {
-      // If quantity is 0 or less, remove the item
-      if (quantity <= 0) {
-        await get().removeFromOrder(uniqueId);
-        return;
-      }
-
-      // Validate new quantity
       if (!get().validateQuantity(quantity)) {
         throw new CartError(`Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`);
       }
 
-      const newOrders = get().activeOrders.map(item => 
+      const newOrders = get().activeOrders.map(item =>
         item.uniqueId === uniqueId ? { ...item, quantity } : item
       );
-
       set({ activeOrders: newOrders });
-      storage.saveCartItems(newOrders);
     } catch (error) {
       if (error instanceof CartError) {
         set({ error: error.message });
       } else {
         set({ error: 'Failed to update quantity' });
       }
-      throw error;
     }
   },
 
   clearOrder: async () => {
     try {
       set({ activeOrders: [] });
-      storage.clearCart();
     } catch (error) {
       set({ error: 'Failed to clear cart' });
-      throw error;
     }
   },
 
