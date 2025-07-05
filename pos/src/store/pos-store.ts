@@ -1,33 +1,22 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
-import { menuData } from '../data/menu-data';
+import { getRestaurantMenu, getAggregatorMenu, MenuItem as APIMenuItem } from '../lib/menu-api';
 import { getPosProfileLimitedFields, getPosProfileFull, PosProfileFull } from '../lib/pos-profile-api';
 import { getMenuCourses, MenuCourse } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { OrderType } from '../data/order-types';
 
-export interface MenuItem {
+// Extend the API MenuItem to include UI-specific properties
+export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
   id: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
-  trending?: boolean;
-  popular?: boolean;
-  recommended?: boolean;
-  description?: string;
-  variants?: {
-    id: string;
-    name: string;
-    price: number;
-  }[];
-  addons?: {
-    id: string;
-    name: string;
-    price: number;
-    category: 'sides' | 'drinks' | 'desserts';
-  }[];
+  name: string; // map from item_name
+  image: string | undefined; // map from item_image
+  price: number; // map from rate
+  quantity?: number;
+  selectedVariant?: { id: string; name: string; price: number };
+  selectedAddons?: { id: string; name: string; price: number }[];
+  uniqueId?: string;
 }
 
 export interface Customer {
@@ -111,7 +100,9 @@ interface POSState {
   paymentModes: PaymentMode[];
   orders: Order[];
   selectedOrderType: OrderType;
+  selectedAggregator: string | null;
   fetchMenuItems: () => Promise<void>;
+  fetchAggregatorMenu: (aggregator: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchPaymentModes: () => Promise<void>;
   fetchOrders: () => Promise<void>;
@@ -166,11 +157,51 @@ export const usePOSStore = create<POSState>((set, get) => ({
   posProfile: null,
   customerGroups: [],
   territories: [],
+  selectedAggregator: null,
 
   fetchMenuItems: async () => {
+    const { posProfile, selectedOrderType } = get();
+    if (!posProfile) {
+      set({ error: 'POS Profile not found' });
+      return;
+    }
+
     try {
       set({ loading: true, error: null });
-      set({ menuItems: menuData, loading: false });
+      const items = await getRestaurantMenu(posProfile.name, selectedOrderType);
+      
+      // Transform API items to match the UI format
+      const menuItems: MenuItem[] = items.map(item => ({
+        ...item,
+        id: item.item,
+        name: item.item_name,
+        image: item.item_image || undefined,
+        price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
+        category: item.category
+      }));
+
+      set({ menuItems, loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
+  },
+
+  fetchAggregatorMenu: async (aggregator: string) => {
+    try {
+      set({ loading: true, error: null });
+      const items = await getAggregatorMenu(aggregator);
+      
+      // Transform API items to match the UI format
+      const menuItems: MenuItem[] = items.map(item => ({
+        ...item,
+        id: item.item,
+        name: item.item_name,
+        image: item.item_image || undefined,
+        price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
+        category: item.category
+      }));
+
+      set({ menuItems, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }
@@ -285,19 +316,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   fetchPosProfile: async () => {
-    set({ loading: true, error: null });
     try {
-      // Try sessionStorage first
-      const cached = storage.getPosProfileFull();
-      if (cached) {
-        set({ posProfile: cached, loading: false });
-        return;
+      set({ loading: true, error: null });
+      const limitedProfile = await getPosProfileLimitedFields();
+      if (!limitedProfile.pos_profile) {
+        throw new Error('No POS profile found');
       }
-      // Fetch limited fields (for the name), then fetch full profile
-      const limited = await getPosProfileLimitedFields();
-      const full = await getPosProfileFull(limited.pos_profile);
-      set({ posProfile: full, loading: false });
-      storage.savePosProfileFull(full);
+      const fullProfile = await getPosProfileFull(limitedProfile.pos_profile);
+      set({ posProfile: fullProfile, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }

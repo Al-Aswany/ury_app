@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, TrendingUp as Trending, Star, ThumbsUp, X } from 'lucide-react';
+import { Search, TrendingUp as Trending, Star, ThumbsUp, X, Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import OrderPanel from '../components/OrderPanel';
 import ProductDialog from '../components/ProductDialog';
@@ -17,7 +17,11 @@ export default function POS() {
     setSelectedItem,
     addToOrder,
     fetchMenuItems,
-    fetchCategories
+    fetchCategories,
+    fetchPosProfile,
+    loading,
+    error,
+    posProfile
   } = usePOSStore();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -27,9 +31,12 @@ export default function POS() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchMenuItems();
-    fetchCategories();
-  }, [fetchMenuItems, fetchCategories]);
+    const initializeData = async () => {
+      await fetchPosProfile();
+      await Promise.all([fetchMenuItems(), fetchCategories()]);
+    };
+    initializeData();
+  }, [fetchPosProfile, fetchMenuItems, fetchCategories]);
 
   useEffect(() => {
     if (showSearch && searchInputRef.current) {
@@ -86,6 +93,34 @@ export default function POS() {
       {label}
     </button>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          <p className="text-sm text-gray-600">Loading menu items...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-lg font-medium text-red-600">Error loading menu</p>
+          <p className="mt-2 text-sm text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -148,23 +183,40 @@ export default function POS() {
                   className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => handleItemClick(item)}
                 >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-24 object-cover filter saturate-75 brightness-95"
-                    style={{ filter: 'saturate(0.7) brightness(0.95)' }}
-                  />
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-24 object-cover filter saturate-75 brightness-95"
+                      style={{ filter: 'saturate(0.7) brightness(0.95)' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const placeholder = document.createElement('div');
+                          placeholder.className = 'w-full h-24 bg-gray-200 flex items-center justify-center text-2xl text-gray-400 font-medium';
+                          placeholder.textContent = item.name.slice(0, 2).toUpperCase();
+                          parent.insertBefore(placeholder, target);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-24 bg-gray-200 flex items-center justify-center text-2xl text-gray-400 font-medium">
+                      {item.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <div className="p-3">
-                    <div className="space-y-2">
-                      <div>
+                    <div className="flex flex-col h-[72px]">
+                      <div className="flex-1">
                         <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2">
                           {item.name}
                         </h3>
                         <p className="text-xs text-gray-500 mt-1">{item.category}</p>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="mt-auto pt-2">
                         <span className="text-sm font-semibold text-gray-900">
-                          {formatCurrency(item.price)}
+                          ₹{item.price.toFixed(2)}
                         </span>
                       </div>
                     </div>
