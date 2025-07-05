@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronDown, Utensils, ShoppingBag, Truck, Globe } from 'lucide-react';
+import { Utensils, ShoppingBag, Truck, Globe } from 'lucide-react';
 import { usePOSStore, type OrderType } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button } from './ui';
+import TableSelectionDialog from './TableSelectionDialog';
 
 const orderTypes = [
   { id: 'dine-in' as OrderType, label: 'Dine In', icon: Utensils },
@@ -12,48 +13,52 @@ const orderTypes = [
 ];
 
 const OrderTypeSelect = () => {
-  const { selectedOrderType, setSelectedOrderType } = usePOSStore();
-  const [isOpen, setIsOpen] = useState(false);
+  const { selectedOrderType, setSelectedOrderType, selectedTable } = usePOSStore();
+  const [showTableDialog, setShowTableDialog] = useState(false);
 
-  const selectedType = orderTypes.find(type => type.id === selectedOrderType);
+  const handleOrderTypeSelect = (type: OrderType) => {
+    setSelectedOrderType(type);
+    if (type === 'dine-in') {
+      setShowTableDialog(true);
+    }
+  };
 
   return (
-    <div className="relative">
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        variant="outline"
-        className="w-full flex items-center justify-between"
-      >
-        <div className="flex items-center gap-3">
-          {selectedType && <selectedType.icon className="w-4 h-4 text-gray-600" />}
-          <span className="font-medium">{selectedType?.label}</span>
-        </div>
-        <ChevronDown className={cn('w-4 h-4 text-gray-400 transition-transform', isOpen && 'rotate-180')} />
-      </Button>
+    <div>
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+        {orderTypes.map(({ id, icon: Icon, label }) => (
+          <Button
+            key={id}
+            onClick={() => handleOrderTypeSelect(id)}
+            variant={selectedOrderType === id ? 'default' : 'outline'}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap bg-white border',
+              selectedOrderType === id
+                ? 'text-primary border-primary hover:bg-white'
+                : 'text-gray-700 border-gray-200 hover:bg-gray-50'
+            )}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </Button>
+        ))}
+      </div>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          {orderTypes.map((type) => {
-            const Icon = type.icon;
-            return (
-              <Button
-                key={type.id}
-                onClick={() => {
-                  setSelectedOrderType(type.id);
-                  setIsOpen(false);
-                }}
-                variant="ghost"
-                className={cn(
-                  'w-full flex items-center gap-3 text-left justify-start',
-                  selectedOrderType === type.id && 'bg-blue-50 text-blue-700'
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{type.label}</span>
-              </Button>
-            );
-          })}
-        </div>
+      {selectedOrderType === 'dine-in' && selectedTable && (
+        <Button
+          onClick={() => setShowTableDialog(true)}
+          variant="ghost"
+          className="mt-2 text-sm text-primary-600 hover:text-primary-700"
+        >
+          Table {selectedTable}
+        </Button>
+      )}
+
+      {/* {showTableDialog && (
+        <TableSelectionDialog onClose={() => setShowTableDialog(false)} />
+      )} */}
+      {showTableDialog && (
+        <TableSelectionDialog onClose={() => setShowTableDialog(false)} />
       )}
     </div>
   );
