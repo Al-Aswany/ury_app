@@ -1,22 +1,39 @@
 import { useState } from 'react';
-import { UserPlus, Mail, Phone } from 'lucide-react';
+import { UserPlus, Mail, Phone, Loader } from 'lucide-react';
 import { customers, usePOSStore, type Customer } from '../store/pos-store';
 import { Button, Dialog, DialogContent, Input } from './ui';
 import { Select, SelectItem } from './ui';
 import { useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
+import { addCustomer, type CreateCustomerData } from '../lib/customer-api';
 
 // NewCustomerForm component
-function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSuccess?: () => void }) {
+function NewCustomerForm({ 
+  onClose, 
+  onSuccess, 
+  isCreatingCustomer: parentIsCreatingCustomer, 
+  setIsCreatingCustomer: setParentIsCreatingCustomer 
+}: { 
+  onClose: () => void; 
+  onSuccess?: () => void;
+  isCreatingCustomer?: boolean;
+  setIsCreatingCustomer?: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const { customerGroups, territories, fetchCustomerGroups, fetchTerritories } = usePOSStore();
   const [newCustomerName, setNewCustomerName] = React.useState("");
   const [newCustomerPhone, setNewCustomerPhone] = React.useState("");
   const [newCustomerGroup, setNewCustomerGroup] = React.useState("");
   const [newCustomerTerritory, setNewCustomerTerritory] = React.useState("");
   const [formError, setFormError] = React.useState(false);
+  const [apiError, setApiError] = React.useState<string>("");
   const [loadingGroups, setLoadingGroups] = React.useState(false);
   const [loadingTerritories, setLoadingTerritories] = React.useState(false);
+  
+  // Use parent loading state if available, otherwise fallback to local state
+  const [localIsCreatingCustomer, setLocalIsCreatingCustomer] = React.useState(false);
+  const isCreatingCustomer = parentIsCreatingCustomer ?? localIsCreatingCustomer;
+  const setIsCreatingCustomer = setParentIsCreatingCustomer ?? setLocalIsCreatingCustomer;
 
   // Fetch groups/territories on mount
   React.useEffect(() => {
@@ -32,24 +49,59 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
 
 
 
-  function handleAddCustomerSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleAddCustomerSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!newCustomerName || !newCustomerPhone) {
       setFormError(true);
       return;
     }
-    // TODO: Add customer logic here
+
     setFormError(false);
-    setNewCustomerName("");
-    setNewCustomerPhone("");
-    setNewCustomerGroup("");
-    setNewCustomerTerritory("");
-    if (onSuccess) onSuccess();
-    onClose();
+    setApiError("");
+    setIsCreatingCustomer(true);
+
+    try {
+      const customerData: CreateCustomerData = {
+        customer_name: newCustomerName.trim(),
+        mobile_number: newCustomerPhone.trim(),
+      };
+
+      // Add optional fields only if they have values
+      if (newCustomerGroup) {
+        customerData.customer_group = newCustomerGroup;
+      }
+      if (newCustomerTerritory) {
+        customerData.territory = newCustomerTerritory;
+      }
+
+      const response = await addCustomer(customerData);
+      
+      // Reset form on success
+      setNewCustomerName("");
+      setNewCustomerPhone("");
+      setNewCustomerGroup("");
+      setNewCustomerTerritory("");
+      
+      if (onSuccess) onSuccess();
+      onClose();
+      
+      // Success - customer created successfully
+      
+    } catch (error: any) {
+      console.error('Failed to create customer:', error);
+      setApiError(error?.message || 'Failed to create customer. Please try again.');
+    } finally {
+      setIsCreatingCustomer(false);
+    }
   }
 
   return (
     <form className="space-y-4" onSubmit={handleAddCustomerSubmit}>
+      {apiError && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+          <div className="text-sm text-red-600">{apiError}</div>
+        </div>
+      )}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="new-customer-name">Name <span className="text-red-500">*</span></label>
         <Input
@@ -58,6 +110,7 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
           value={newCustomerName}
           onChange={e => setNewCustomerName(e.target.value)}
           required
+          disabled={isCreatingCustomer}
           aria-invalid={!!formError && !newCustomerName}
         />
         {formError && !newCustomerName && (
@@ -73,6 +126,7 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
             value={newCustomerPhone}
             onChange={e => setNewCustomerPhone(e.target.value)}
             required
+            disabled={isCreatingCustomer}
             className="pl-10"
             aria-invalid={!!formError && !newCustomerPhone}
           />
@@ -87,8 +141,8 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
         <Select
           placeholder={loadingGroups ? 'Loading...' : 'Select group'}
           value={newCustomerGroup}
-          onValueChange={(value) => {console.log(value);setNewCustomerGroup(value);}}
-          disabled={loadingGroups || !customerGroups.length}
+          onValueChange={setNewCustomerGroup}
+          disabled={isCreatingCustomer || loadingGroups || !customerGroups.length}
         >
           {customerGroups.map((group) => (
             <SelectItem key={group} value={group} className="capitalize">
@@ -106,7 +160,7 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
           placeholder={loadingTerritories ? 'Loading...' : 'Select territory'}
           value={newCustomerTerritory}
           onValueChange={setNewCustomerTerritory}
-          disabled={loadingTerritories || !territories.length}
+          disabled={isCreatingCustomer || loadingTerritories || !territories.length}
         >
           {territories.map((territory) => (
             <SelectItem key={territory} value={territory} className="capitalize">
@@ -123,13 +177,22 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
           type="submit"
           variant="default"
           className="flex-1"
+          disabled={isCreatingCustomer}
         >
-          Add Customer
+          {isCreatingCustomer ? (
+            <>
+              <Loader className="w-4 h-4 mr-2 animate-spin" />
+              Adding Customer...
+            </>
+          ) : (
+            'Add Customer'
+          )}
         </Button>
         <Button
           type="button"
           variant="outline"
           onClick={onClose}
+          disabled={isCreatingCustomer}
         >
           Cancel
         </Button>
@@ -140,6 +203,7 @@ function NewCustomerForm({ onClose, onSuccess }: { onClose: () => void; onSucces
 
 const CustomerSelect = () => {
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -265,10 +329,22 @@ const CustomerSelect = () => {
         </div>
       )}
       {showNewCustomerForm && (
-        <Dialog open={showNewCustomerForm} onOpenChange={setShowNewCustomerForm}>
+        <Dialog 
+          open={showNewCustomerForm} 
+          onOpenChange={(open) => {
+            // Prevent closing the dialog when creating customer
+            if (!isCreatingCustomer) {
+              setShowNewCustomerForm(open);
+            }
+          }}
+        >
           <DialogContent className="w-full max-w-md p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
-            <NewCustomerForm onClose={() => setShowNewCustomerForm(false)} />
+            <NewCustomerForm 
+              onClose={() => setShowNewCustomerForm(false)} 
+              isCreatingCustomer={isCreatingCustomer}
+              setIsCreatingCustomer={setIsCreatingCustomer}
+            />
           </DialogContent>
         </Dialog>
       )}
