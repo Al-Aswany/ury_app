@@ -1,4 +1,5 @@
-import { FrappeApp } from 'frappe-js-sdk';
+import { DOCTYPES } from '../data/doctypes';
+import { call, db } from './frappe-sdk';
 
 // Limited fields response
 export interface PosProfileLimited {
@@ -31,23 +32,19 @@ export interface PosProfileFull {
   name: string;
   branch: string;
   company: string;
-  // ... add more fields as needed
 }
 
 export interface PosProfileFullResponse {
   message: PosProfileFull;
 }
 
-const frappe = new FrappeApp(import.meta.env.VITE_FRAPPE_BASE_URL);
 
 export async function getPosProfileLimitedFields(): Promise<PosProfileLimited> {
-  const call = frappe.call();
   const res = await call.get('ury.ury_pos.api.getPosProfile');
   return res.message;
 }
 
 export async function getPosProfileFull(posProfileName: string): Promise<PosProfileFull> {
-  const db = frappe.db();
-  const doc = await db.getDoc('POS Profile', posProfileName);
+  const doc = await db.getDoc(DOCTYPES.POS_PROFILE, posProfileName);
   return doc;
 } 
