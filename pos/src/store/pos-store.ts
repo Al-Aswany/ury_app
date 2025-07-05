@@ -3,9 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
 import { getRestaurantMenu, getAggregatorMenu, MenuItem as APIMenuItem } from '../lib/menu-api';
 import { getPosProfileLimitedFields, getPosProfileFull, PosProfileFull } from '../lib/pos-profile-api';
-import { getMenuCourses, MenuCourse } from '../lib/menu-course-api';
+import { getMenuCourses } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
-import { OrderType } from '../data/order-types';
+import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 
 // Extend the API MenuItem to include UI-specific properties
 export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
@@ -111,7 +111,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   selectedTable: null,
   searchQuery: '',
   selectedCustomer: null,
-  selectedOrderType: 'dine-in' as OrderType,
+  selectedOrderType: DEFAULT_ORDER_TYPE as OrderType,
   quickFilter: 'all',
   selectedItem: null,
   cartId: null,

@@ -37,3 +37,4 @@ export const ORDER_TYPES: OrderTypes[] = [
 ]
 
 export const DINE_IN="Dine In"
+export const DEFAULT_ORDER_TYPE="Takeaway"
