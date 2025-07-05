@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
 import { menuData } from '../data/menu-data';
-import { getPosProfileLimitedFields, getPosProfileFull, PosProfileLimited, PosProfileFull } from '../lib/pos-profile-api';
+import { getPosProfileLimitedFields, getPosProfileFull, PosProfileFull } from '../lib/pos-profile-api';
 import { getMenuCourses, MenuCourse } from '../lib/menu-course-api';
 import { OrderType } from '../data/order-types';
 
@@ -133,8 +133,7 @@ interface POSState {
   initializeCart: () => Promise<void>;
   processPayment: (paymentModeId: string, amount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  posProfileLimited: PosProfileLimited | null;
-  posProfileFull: PosProfileFull | null;
+  posProfile: PosProfileFull | null;
   fetchPosProfile: () => Promise<void>;
 }
 
@@ -164,8 +163,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
     { id: 'upi', name: 'UPI', enabled: true }
   ],
   orders: [],
-  posProfileLimited: null,
-  posProfileFull: null,
+  posProfile: null,
 
   fetchMenuItems: async () => {
     try {
@@ -290,15 +288,13 @@ export const usePOSStore = create<POSState>((set, get) => ({
       // Try sessionStorage first
       const cached = storage.getPosProfileFull();
       if (cached) {
-        set({ posProfileFull: cached, loading: false });
+        set({ posProfile: cached, loading: false });
         return;
       }
-      // Fetch limited fields
+      // Fetch limited fields (for the name), then fetch full profile
       const limited = await getPosProfileLimitedFields();
-      set({ posProfileLimited: limited });
-      // Fetch full profile
       const full = await getPosProfileFull(limited.pos_profile);
-      set({ posProfileFull: full, loading: false });
+      set({ posProfile: full, loading: false });
       storage.savePosProfileFull(full);
     } catch (error) {
       set({ error: (error as Error).message, loading: false });

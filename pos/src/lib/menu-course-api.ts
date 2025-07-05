@@ -13,7 +13,7 @@ export interface MenuCourseResponse {
 export async function getMenuCourses(): Promise<MenuCourse[]> {
   const courses = await db.getDocList(DOCTYPES.URY_MENU_COURSE, {
     fields: ['name'],
-    limit: 100,
+    limit: "*" as unknown as number,
     asDict: true,
   });
   return courses as MenuCourse[];

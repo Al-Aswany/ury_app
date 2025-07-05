@@ -24,7 +24,7 @@ const TableIcon = ({ type, className }: { type: 'round' | 'square' | 'rectangle'
 };
 
 const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
-  const { selectedTable, setSelectedTable, posProfileLimited } = usePOSStore();
+  const { selectedTable, setSelectedTable, posProfile } = usePOSStore();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
@@ -35,11 +35,11 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
   // Fetch rooms on mount
   useEffect(() => {
     async function fetchRooms() {
-      if (!posProfileLimited?.branch) return;
+      if (!posProfile?.branch) return;
       setLoadingRooms(true);
       setError(null);
       try {
-        const fetchedRooms = await getRooms(posProfileLimited.branch);
+        const fetchedRooms = await getRooms(posProfile.branch);
         setRooms(fetchedRooms);
         if (fetchedRooms.length > 0) {
           setSelectedRoom(fetchedRooms[0].name);
@@ -51,8 +51,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
       }
     }
     fetchRooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [posProfileLimited?.branch]);
+  }, []);
 
   // Fetch tables when selectedRoom changes
   useEffect(() => {

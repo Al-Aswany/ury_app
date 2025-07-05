@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Search,
   Bell,
   Command,
   User,
@@ -14,7 +13,6 @@ import {
   AlertCircle,
   DollarSign,
   ChefHat,
-  CheckSquare,
   Monitor,
   BarChart3
 } from 'lucide-react';

@@ -1,12 +1,6 @@
-import React from 'react';
 import { 
-  Utensils, 
-  Pizza, 
-  Salad, 
   Cookie,
   Grid3X3,
-  Coffee,
-  ChefHat
 } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';

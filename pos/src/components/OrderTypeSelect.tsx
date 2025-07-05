@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button } from './ui';
