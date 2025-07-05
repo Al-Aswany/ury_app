@@ -24,9 +24,11 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
+      const searchTerm = searchQuery.toLowerCase();
       const matchesCategory = !selectedCategory || item.course === selectedCategory;
       const matchesSearch = !searchQuery || 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase());
+        item.name.toLowerCase().includes(searchTerm) ||
+        item.item.toLowerCase().includes(searchTerm);
       const matchesFilter = quickFilter === 'all' || 
         (quickFilter === 'trending' && item.trending) ||
         (quickFilter === 'popular' && item.popular) ||
@@ -78,6 +80,7 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
               price={item.price}
               item_image={item.image}
               course={item.course}
+              item={item.item}
               onClick={() => onItemClick(item)}
             />
           ))}

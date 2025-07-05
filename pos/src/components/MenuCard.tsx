@@ -7,10 +7,11 @@ interface MenuCardProps {
   price: number;
   item_image: string | null;
   course?: string;
+  item: string;  // Add item code to props
   onClick?: () => void;
 }
 
-const MenuCard: FC<MenuCardProps> = ({ id, name, price, item_image, course, onClick }) => {
+const MenuCard: FC<MenuCardProps> = ({ id, name, price, item_image, course, item, onClick }) => {
   return (
     <div
       className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer h-56 flex flex-col"

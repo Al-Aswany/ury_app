@@ -191,7 +191,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
         <div className="md:w-1/3 p-6 overflow-y-auto">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{selectedItem.name}</h2>
-            <p className="text-gray-600 mt-2">{selectedItem.description}</p>
+            <p className="text-sm text-gray-500 mt-1">{selectedItem.item}</p>
           </div>
 
           {selectedItem.variants && selectedItem.variants.length > 0 && (
