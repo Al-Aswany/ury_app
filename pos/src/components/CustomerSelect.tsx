@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { UserPlus, Mail, Phone } from 'lucide-react';
 import { customers, usePOSStore, type Customer } from '../store/pos-store';
-import { Button, Dialog, DialogContent } from './ui';
+import { Button, Dialog, DialogContent, Input } from './ui';
+import { Select } from './ui';
+import * as RadixSelect from '@radix-ui/react-select';
 import { useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -12,6 +14,24 @@ const CustomerSelect = () => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const { selectedCustomer, setSelectedCustomer } = usePOSStore();
+
+  // Add state and handler for new customer form
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [formError, setFormError] = useState(false);
+
+  function handleAddCustomerSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!newCustomerName || !newCustomerPhone) {
+      setFormError(true);
+      return;
+    }
+    // TODO: Add customer logic here
+    setFormError(false);
+    setShowNewCustomerForm(false);
+    setNewCustomerName("");
+    setNewCustomerPhone("");
+  }
 
   const filteredCustomers = customers.filter((customer) =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,35 +153,50 @@ const CustomerSelect = () => {
       )}
       {showNewCustomerForm && (
         <Dialog open={showNewCustomerForm} onOpenChange={setShowNewCustomerForm}>
-          <DialogContent className="w-full max-w-md p-6">
+          <DialogContent className="w-full max-w-md p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleAddCustomerSubmit}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="new-customer-name">Name <span className="text-red-500">*</span></label>
+                <Input
+                  id="new-customer-name"
                   type="text"
-                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
+                  value={newCustomerName}
+                  onChange={e => setNewCustomerName(e.target.value)}
+                  required
+                  aria-invalid={!!formError && !newCustomerName}
                 />
+                {formError && !newCustomerName && (
+                  <div className="text-xs text-red-500 mt-1">Name is required</div>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="new-customer-phone">Phone <span className="text-red-500">*</span></label>
                 <div className="relative">
-                  <input
-                    type="email"
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm pl-10"
-                  />
-                  <Mail className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <div className="relative">
-                  <input
+                  <Input
+                    id="new-customer-phone"
                     type="tel"
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm pl-10"
+                    value={newCustomerPhone}
+                    onChange={e => setNewCustomerPhone(e.target.value)}
+                    required
+                    className="pl-10"
+                    aria-invalid={!!formError && !newCustomerPhone}
                   />
                   <Phone className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
                 </div>
+                {formError && !newCustomerPhone && (
+                  <div className="text-xs text-red-500 mt-1">Phone is required</div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Group</label>
+                <Select placeholder="Select group" disabled>{null}</Select>
+                <div className="text-xs text-gray-400 mt-1">No options</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Territory</label>
+                <Select placeholder="Select territory" disabled>{null}</Select>
+                <div className="text-xs text-gray-400 mt-1">No options</div>
               </div>
               <div className="flex gap-3 mt-6">
                 <Button

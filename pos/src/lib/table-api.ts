@@ -1,3 +1,4 @@
+import { DOCTYPES } from '../data/doctypes';
 import { db } from './frappe-sdk';
 
 export interface Room {
@@ -14,7 +15,7 @@ export interface Table {
 }
 
 export async function getRooms(branch: string): Promise<Room[]> {
-  const rooms = await db.getDocList('URY Room', {
+  const rooms = await db.getDocList(DOCTYPES.URY_ROOM, {
     fields: ['name', 'branch'],
     filters: [['branch', 'like', branch]],
     limit: "*" as unknown as number,
