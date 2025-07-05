@@ -189,7 +189,7 @@ const Header = () => {
             <Input
               readOnly
               placeholder="Search orders, menu items, or customers..."
-              className="w-full bg-transparent border-0 focus:outline-none cursor-pointer"
+              className="w-full bg-transparent border-0 focus:outline-none cursor-pointer focus-visible:ring-0 focus-visible:ring-offset-0"
               onClick={(e) => e.preventDefault()}
             />
             <div className="flex items-center gap-2 text-gray-400">
