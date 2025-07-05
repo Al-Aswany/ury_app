@@ -4,8 +4,7 @@ import { storage } from '../lib/storage';
 import { menuData } from '../data/menu-data';
 import { getPosProfileLimitedFields, getPosProfileFull, PosProfileLimited, PosProfileFull } from '../lib/pos-profile-api';
 import { getMenuCourses, MenuCourse } from '../lib/menu-course-api';
-
-export type OrderType = 'dine-in' | 'takeaway' | 'delivery' | 'aggregator';
+import { OrderType } from '../data/order-types';
 
 export interface MenuItem {
   id: string;
