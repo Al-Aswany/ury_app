@@ -3,12 +3,12 @@ import { Search, TrendingUp as Trending, Star, ThumbsUp, X, Loader2 } from 'luci
 import Sidebar from '../components/Sidebar';
 import OrderPanel from '../components/OrderPanel';
 import ProductDialog from '../components/ProductDialog';
+import MenuList from '../components/MenuList';
 import { usePOSStore } from '../store/pos-store';
-import { cn, formatCurrency } from '../lib/utils';
+import { cn } from '../lib/utils';
 
 export default function POS() {
   const {
-    menuItems,
     selectedCategory,
     searchQuery,
     setSearchQuery,
@@ -16,7 +16,6 @@ export default function POS() {
     setQuickFilter,
     setSelectedItem,
     addToOrder,
-    fetchMenuItems,
     fetchCategories,
     fetchPosProfile,
     loading,
@@ -33,10 +32,10 @@ export default function POS() {
   useEffect(() => {
     const initializeData = async () => {
       await fetchPosProfile();
-      await Promise.all([fetchMenuItems(), fetchCategories()]);
+      await fetchCategories();
     };
     initializeData();
-  }, [fetchPosProfile, fetchMenuItems, fetchCategories]);
+  }, [fetchPosProfile, fetchCategories]);
 
   useEffect(() => {
     if (showSearch && searchInputRef.current) {
@@ -44,18 +43,7 @@ export default function POS() {
     }
   }, [showSearch]);
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesCategory = !selectedCategory || item.category === selectedCategory;
-    const matchesSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesQuickFilter = quickFilter === 'all' || 
-      (quickFilter === 'trending' && item.trending) ||
-      (quickFilter === 'popular' && item.popular) ||
-      (quickFilter === 'recommended' && item.recommended);
-    
-    return matchesCategory && matchesSearch && matchesQuickFilter;
-  });
-
-  const handleItemClick = (item: typeof menuItems[0]) => {
+  const handleItemClick = (item: any) => {
     clickCountRef.current += 1;
     
     if (clickTimerRef.current) {
@@ -154,7 +142,7 @@ export default function POS() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <button
-                        onClick={() => {
+                      onClick={() => {
                         setShowSearch(false);
                         setSearchQuery('');
                       }}
@@ -174,58 +162,7 @@ export default function POS() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-screen-xl mx-auto p-4 pb-40">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => handleItemClick(item)}
-                >
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-24 object-cover filter saturate-75 brightness-95"
-                      style={{ filter: 'saturate(0.7) brightness(0.95)' }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          const placeholder = document.createElement('div');
-                          placeholder.className = 'w-full h-24 bg-gray-200 flex items-center justify-center text-2xl text-gray-400 font-medium';
-                          placeholder.textContent = item.name.slice(0, 2).toUpperCase();
-                          parent.insertBefore(placeholder, target);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-24 bg-gray-200 flex items-center justify-center text-2xl text-gray-400 font-medium">
-                      {item.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <div className="flex flex-col h-[72px]">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">{item.category}</p>
-                      </div>
-                      <div className="mt-auto pt-2">
-                        <span className="text-sm font-semibold text-gray-900">
-                          ₹{item.price.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <MenuList onItemClick={handleItemClick} />
       </div>
       <OrderPanel />
       {isDialogOpen && <ProductDialog onClose={() => setIsDialogOpen(false)} />}
