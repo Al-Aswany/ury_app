@@ -7,6 +7,18 @@ import { getMenuCourses } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 
+// Constants
+const MAX_QUANTITY = 99;
+const MIN_QUANTITY = 1;
+
+// Custom error class for cart operations
+class CartError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CartError';
+  }
+}
+
 // Extend the API MenuItem to include UI-specific properties
 export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
   id: string;
@@ -17,6 +29,7 @@ export interface MenuItem extends Omit<APIMenuItem, 'rate' | 'item_image'> {
   selectedVariant?: { id: string; name: string; price: number };
   selectedAddons?: { id: string; name: string; price: number }[];
   uniqueId?: string;
+  tax_rate?: number;
 }
 
 export interface Customer {
@@ -50,6 +63,13 @@ export interface Order {
   paidAmount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface CartTotals {
+  subtotal: number;
+  tax: number;
+  total: number;
+  itemCount: number;
 }
 
 interface POSState {
@@ -98,12 +118,22 @@ interface POSState {
   fetchCustomerGroups: () => Promise<void>;
   fetchTerritories: () => Promise<void>;
   fetchCurrencySymbol: () => Promise<void>;
+  getCartTotals: () => CartTotals;
+  itemExistsInCart: (uniqueId: string) => boolean;
+  validateQuantity: (quantity: number) => boolean;
+  getItemPrice: (item: OrderItem) => number;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
   const variantId = item.selectedVariant?.id || 'default';
   const addonIds = item.selectedAddons?.map(addon => addon.id).sort().join('-') || 'no-addons';
   return `${item.id}-${variantId}-${addonIds}`;
+};
+
+const calculateItemPrice = (item: OrderItem): number => {
+  const basePrice = item.selectedVariant?.price || item.price;
+  const addonsTotal = item.selectedAddons?.reduce((sum, addon) => sum + addon.price, 0) || 0;
+  return basePrice + addonsTotal;
 };
 
 export const usePOSStore = create<POSState>((set, get) => ({
@@ -265,30 +295,97 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ cartId: uuidv4() });
   },
 
-  addToOrder: async (item) => {
-    const uniqueId = generateUniqueId(item);
-    const newOrders = [...get().activeOrders, { ...item, uniqueId }];
-    set({ activeOrders: newOrders });
-    storage.saveCartItems(newOrders);
+  addToOrder: async (item: OrderItem) => {
+    try {
+      // Validate quantity
+      if (!get().validateQuantity(item.quantity)) {
+        throw new CartError(`Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`);
+      }
+
+      const uniqueId = generateUniqueId(item);
+      const existingItemIndex = get().activeOrders.findIndex(orderItem => orderItem.uniqueId === uniqueId);
+
+      if (existingItemIndex !== -1) {
+        // If item exists, validate and update its quantity
+        const existingItem = get().activeOrders[existingItemIndex];
+        const newQuantity = existingItem.quantity + item.quantity;
+
+        if (!get().validateQuantity(newQuantity)) {
+          throw new CartError(`Cannot add item. Total quantity would exceed ${MAX_QUANTITY}`);
+        }
+
+        const newOrders = [...get().activeOrders];
+        newOrders[existingItemIndex] = {
+          ...existingItem,
+          quantity: newQuantity
+        };
+        
+        set({ activeOrders: newOrders });
+        storage.saveCartItems(newOrders);
+      } else {
+        // If item doesn't exist, add it as new
+        const newOrders = [...get().activeOrders, { ...item, uniqueId }];
+        set({ activeOrders: newOrders });
+        storage.saveCartItems(newOrders);
+      }
+    } catch (error) {
+      if (error instanceof CartError) {
+        set({ error: error.message });
+      } else {
+        set({ error: 'Failed to add item to cart' });
+      }
+      throw error;
+    }
   },
 
-  removeFromOrder: async (uniqueId) => {
-    const newOrders = get().activeOrders.filter(item => item.uniqueId !== uniqueId);
-    set({ activeOrders: newOrders });
-    storage.saveCartItems(newOrders);
+  removeFromOrder: async (uniqueId: string) => {
+    try {
+      const newOrders = get().activeOrders.filter(item => item.uniqueId !== uniqueId);
+      set({ activeOrders: newOrders });
+      storage.saveCartItems(newOrders);
+    } catch (error) {
+      set({ error: 'Failed to remove item from cart' });
+      throw error;
+    }
   },
 
-  updateQuantity: async (uniqueId, quantity) => {
-    const newOrders = get().activeOrders.map(item => 
-      item.uniqueId === uniqueId ? { ...item, quantity } : item
-    );
-    set({ activeOrders: newOrders });
-    storage.saveCartItems(newOrders);
+  updateQuantity: async (uniqueId: string, quantity: number) => {
+    try {
+      // If quantity is 0 or less, remove the item
+      if (quantity <= 0) {
+        await get().removeFromOrder(uniqueId);
+        return;
+      }
+
+      // Validate new quantity
+      if (!get().validateQuantity(quantity)) {
+        throw new CartError(`Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`);
+      }
+
+      const newOrders = get().activeOrders.map(item => 
+        item.uniqueId === uniqueId ? { ...item, quantity } : item
+      );
+
+      set({ activeOrders: newOrders });
+      storage.saveCartItems(newOrders);
+    } catch (error) {
+      if (error instanceof CartError) {
+        set({ error: error.message });
+      } else {
+        set({ error: 'Failed to update quantity' });
+      }
+      throw error;
+    }
   },
 
   clearOrder: async () => {
-    set({ activeOrders: [] });
-    storage.clearCart();
+    try {
+      set({ activeOrders: [] });
+      storage.clearCart();
+    } catch (error) {
+      set({ error: 'Failed to clear cart' });
+      throw error;
+    }
   },
 
   setSelectedCategory: (category) => set({ selectedCategory: category }),
@@ -367,5 +464,40 @@ export const usePOSStore = create<POSState>((set, get) => ({
     const names = terrs.map((t: any) => t.name);
     set({ territories: names });
     sessionStorage.setItem('territories', JSON.stringify(names));
+  },
+
+  getCartTotals: (): CartTotals => {
+    const items = get().activeOrders;
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    
+    const subtotal = items.reduce((sum, item) => {
+      const itemPrice = calculateItemPrice(item);
+      return sum + (itemPrice * item.quantity);
+    }, 0);
+
+    const tax = items.reduce((sum, item) => {
+      const itemPrice = calculateItemPrice(item);
+      const taxRate = item.tax_rate || 0;
+      return sum + (itemPrice * item.quantity * (taxRate / 100));
+    }, 0);
+
+    return {
+      subtotal,
+      tax,
+      total: subtotal + tax,
+      itemCount
+    };
+  },
+
+  itemExistsInCart: (uniqueId: string): boolean => {
+    return get().activeOrders.some(item => item.uniqueId === uniqueId);
+  },
+
+  validateQuantity: (quantity: number): boolean => {
+    return quantity >= MIN_QUANTITY && quantity <= MAX_QUANTITY;
+  },
+
+  getItemPrice: (item: OrderItem): number => {
+    return calculateItemPrice(item);
   }
 })); 
