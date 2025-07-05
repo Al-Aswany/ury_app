@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { UserPlus, Mail, Phone, Loader } from 'lucide-react';
 import { customers, usePOSStore, type Customer } from '../store/pos-store';
 import { Button, Dialog, DialogContent, Input } from './ui';
 import { Select, SelectItem } from './ui';
-import { useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
-import { addCustomer, type CreateCustomerData } from '../lib/customer-api';
+import { addCustomer, type CreateCustomerData, searchCustomers } from '../lib/customer-api';
 
 // NewCustomerForm component
 function NewCustomerForm({ 
@@ -207,13 +206,35 @@ const CustomerSelect = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { selectedCustomer, setSelectedCustomer } = usePOSStore();
 
-  const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm)
-  );
+  // Debounced search
+  useEffect(() => {
+    if (!isOpen || !searchTerm.trim()) {
+      setSearchResults([]);
+      setSearchError(null);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    setSearchError(null);
+    const handler = setTimeout(() => {
+      searchCustomers(searchTerm)
+        .then(results => {
+          setSearchResults(results);
+          setIsSearching(false);
+        })
+        .catch(err => {
+          setSearchError('Failed to search customers');
+          setIsSearching(false);
+        });
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm, isOpen]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -223,18 +244,25 @@ const CustomerSelect = () => {
       return;
     }
     if (e.key === 'ArrowDown') {
-      setHighlightedIndex((prev) => Math.min(prev + 1, filteredCustomers.length));
+      setHighlightedIndex((prev) => Math.min(prev + 1, searchResults.length));
       e.preventDefault();
     } else if (e.key === 'ArrowUp') {
       setHighlightedIndex((prev) => Math.max(prev - 1, 0));
       e.preventDefault();
     } else if (e.key === 'Enter') {
       if (isOpen) {
-        if (highlightedIndex === filteredCustomers.length) {
+        if (highlightedIndex === searchResults.length) {
           setShowNewCustomerForm(true);
           setIsOpen(false);
-        } else if (filteredCustomers[highlightedIndex]) {
-          setSelectedCustomer(filteredCustomers[highlightedIndex]);
+        } else if (searchResults[highlightedIndex]) {
+          // The API returns { name, content, ... }
+          const customer = searchResults[highlightedIndex];
+          setSelectedCustomer({
+            id: customer.name,
+            name: customer.content?.match(/Customer Name : ([^|]+)/)?.[1]?.trim() || customer.name,
+            phone: customer.content?.match(/Mobile Number : ([^|]+)/)?.[1]?.trim() || '',
+            email: '',
+          });
           setSearchTerm('');
           setIsOpen(false);
         }
@@ -275,7 +303,6 @@ const CustomerSelect = () => {
               }}
               onFocus={() => setIsOpen(true)}
               onBlur={e => {
-                // Delay to allow click selection
                 setTimeout(() => setIsOpen(false), 100);
               }}
               onKeyDown={handleKeyDown}
@@ -288,39 +315,50 @@ const CustomerSelect = () => {
           </div>
           {isOpen && (
             <div className="absolute w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer, idx) => (
+              {isSearching && (
+                <div className="flex items-center justify-center p-4 text-gray-500 text-sm select-none">
+                  <Loader className="w-4 h-4 mr-2 animate-spin" /> Searching...
+                </div>
+              )}
+              {searchError && (
+                <div className="p-4 text-center text-red-500 text-sm select-none">{searchError}</div>
+              )}
+              {!isSearching && !searchError && searchResults.length > 0 && searchResults.map((customer, idx) => {
+                const name = customer.content?.match(/Customer Name : ([^|]+)/)?.[1]?.trim() || customer.name;
+                const phone = customer.content?.match(/Mobile Number : ([^|]+)/)?.[1]?.trim() || '';
+                return (
                   <button
-                    key={customer.id}
+                    key={customer.name}
                     type="button"
                     className={`w-full gap-2 px-4 py-2 text-left rounded-md text-gray-800 text-sm select-none transition-colors ${
                       idx === highlightedIndex ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
                     }`}
                     onMouseDown={() => {
-                      setSelectedCustomer(customer);
+                      setSelectedCustomer({ id: customer.name, name, phone, email: '' });
                       setSearchTerm('');
                       setIsOpen(false);
                     }}
                     onMouseEnter={() => setHighlightedIndex(idx)}
                   >
-                    <div className="font-medium">{customer.name}</div>
-                    <div className="ml-auto text-xs text-gray-500">{customer.phone}</div>
+                    <div className="font-medium">{name}</div>
+                    <div className="ml-auto text-xs text-gray-500">{phone}</div>
                   </button>
-                ))
-              ) : (
+                );
+              })}
+              {!isSearching && !searchError && searchResults.length === 0 && searchTerm.trim() && (
                 <div className="p-4 text-center text-gray-400 text-sm select-none">No customers found</div>
               )}
               <div className="my-1 h-px bg-gray-100" />
               <button
                 type="button"
                 className={`flex items-center gap-2 w-full px-4 py-2 text-primary-600 hover:text-primary-700 hover:bg-gray-50 font-medium rounded-md text-sm select-none transition-colors ${
-                  highlightedIndex === filteredCustomers.length ? 'bg-primary-50' : ''
+                  highlightedIndex === searchResults.length ? 'bg-primary-50' : ''
                 }`}
                 onMouseDown={() => {
                   setShowNewCustomerForm(true);
                   setIsOpen(false);
                 }}
-                onMouseEnter={() => setHighlightedIndex(filteredCustomers.length)}
+                onMouseEnter={() => setHighlightedIndex(searchResults.length)}
               >
                 <UserPlus className="w-4 h-4" /> Add New Customer
               </button>

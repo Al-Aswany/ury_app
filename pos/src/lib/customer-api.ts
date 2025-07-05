@@ -1,4 +1,5 @@
-import { db } from './frappe-sdk';
+import { DOCTYPES } from '../data/doctypes';
+import { db, call } from './frappe-sdk';
 
 export interface Customer {
   name: string;
@@ -42,7 +43,7 @@ export interface CreateCustomerResponse {
 }
 
 export async function getCustomerGroups() {
-  const groups = await db.getDocList('Customer Group', {
+  const groups = await db.getDocList(DOCTYPES.CUSTOMER_GROUP, {
     fields: ['name'],
     limit: "*" as unknown as number,
     orderBy: {
@@ -54,7 +55,7 @@ export async function getCustomerGroups() {
 }
 
 export async function getCustomerTerritories() {
-  const territories = await db.getDocList('Territory', {
+  const territories = await db.getDocList(DOCTYPES.CUSTOMER_TERRITORY, {
     fields: ['name'],
     limit: "*" as unknown as number,
     orderBy: {
@@ -67,7 +68,7 @@ export async function getCustomerTerritories() {
 
 export async function addCustomer(customerData: CreateCustomerData): Promise<CreateCustomerResponse> {
   try {
-    const response = await db.createDoc('Customer', customerData);
+    const response = await db.createDoc(DOCTYPES.CUSTOMER, customerData);
     return { data: response as Customer };
   } catch (error) {
     console.error('Error creating customer:', error);
@@ -75,6 +76,17 @@ export async function addCustomer(customerData: CreateCustomerData): Promise<Cre
   }
 }
 
-export async function searchCustomers() {
-    
+export async function searchCustomers(search: string, limit = 5) {
+  if (!search.trim()) return [];
+  try {
+    const res = await call.get('frappe.utils.global_search.search', {
+      text: search,
+      doctype: DOCTYPES.CUSTOMER,
+      limit,
+    });
+    return res.message || [];
+  } catch (error) {
+    console.error('Customer search error:', error);
+    throw error;
+  }
 }
