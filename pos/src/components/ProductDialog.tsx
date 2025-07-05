@@ -154,11 +154,29 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
       >
         {/* Left Column - Image and Basic Info */}
         <div className="md:w-1/3 relative">
-          <img
-            src={selectedItem.image || ''}
-            alt={selectedItem.name}
-            className="w-full h-64 md:h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
-          />
+          {selectedItem.image ? (
+            <img
+              src={selectedItem.image}
+              alt={selectedItem.name}
+              className="w-full h-96 object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none filter saturate-75 brightness-95"
+              style={{ filter: 'saturate(0.7) brightness(0.95)' }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  const placeholder = document.createElement('div');
+                  placeholder.className = 'w-full h-96 bg-gray-200 flex items-center justify-center text-[8rem] text-gray-400 font-medium rounded-t-lg md:rounded-l-lg md:rounded-tr-none';
+                  placeholder.textContent = selectedItem.name.slice(0, 2).toUpperCase();
+                  parent.insertBefore(placeholder, target);
+                }
+              }}
+            />
+          ) : (
+            <div className="w-full h-96 bg-gray-200 flex items-center justify-center text-[8rem] text-gray-400 font-medium rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+              {selectedItem.name.slice(0, 2).toUpperCase()}
+            </div>
+          )}
           <Button
             onClick={handleClose}
             variant="outline"
