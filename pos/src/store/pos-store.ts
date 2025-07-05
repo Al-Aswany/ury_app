@@ -33,7 +33,6 @@ export interface MenuItem {
 export interface Customer {
   id: string;
   name: string;
-  email: string;
   phone: string;
 }
 
@@ -68,25 +67,21 @@ export const customers: Customer[] = [
   {
     id: '1',
     name: 'Hafni Anusha',
-    email: 'hafni@example.com',
     phone: '9876543210'
   },
   {
     id: '2',
     name: 'Fairoos',
-    email: 'fairoos@example.com',
     phone: '9876543211'
   },
   {
     id: '3',
     name: 'Jezlan',
-    email: 'jezlan@example.com',
     phone: '9876543212'
   },
   {
     id: '4',
     name: 'Jabir',
-    email: 'jabir@example.com',
     phone: '9876543213'
   }
 ];

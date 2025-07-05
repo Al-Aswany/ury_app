@@ -23,7 +23,7 @@ function NewCustomerForm({
   prefillName?: string;
   prefillPhone?: string;
 }) {
-  const { customerGroups, territories, fetchCustomerGroups, fetchTerritories } = usePOSStore();
+  const { customerGroups, territories, fetchCustomerGroups, fetchTerritories, setSelectedCustomer } = usePOSStore();
   const [newCustomerName, setNewCustomerName] = React.useState(prefillName);
   const [newCustomerPhone, setNewCustomerPhone] = React.useState(prefillPhone);
   const [newCustomerGroup, setNewCustomerGroup] = React.useState("");
@@ -78,18 +78,20 @@ function NewCustomerForm({
       }
 
       const response = await addCustomer(customerData);
-      
+      const created = response.data;
+      // Set selected customer in POS store
+      setSelectedCustomer({
+        id: created.name,
+        name: created.customer_name,
+        phone: created.mobile_number,
+      });
       // Reset form on success
       setNewCustomerName("");
       setNewCustomerPhone("");
       setNewCustomerGroup("");
       setNewCustomerTerritory("");
-      
       if (onSuccess) onSuccess();
       onClose();
-      
-      // Success - customer created successfully
-      
     } catch (error: any) {
       console.error('Failed to create customer:', error);
       setApiError(error?.message || 'Failed to create customer. Please try again.');
@@ -267,7 +269,6 @@ const CustomerSelect = () => {
             id: customer.name,
             name: customer.content?.match(/Customer Name : ([^|]+)/)?.[1]?.trim() || customer.name,
             phone: customer.content?.match(/Mobile Number : ([^|]+)/)?.[1]?.trim() || '',
-            email: '',
           });
           setSearchTerm('');
           setIsOpen(false);
@@ -343,7 +344,7 @@ const CustomerSelect = () => {
                       idx === highlightedIndex ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
                     }`}
                     onMouseDown={() => {
-                      setSelectedCustomer({ id: customer.name, name, phone, email: '' });
+                      setSelectedCustomer({ id: customer.name, name, phone });
                       setSearchTerm('');
                       setIsOpen(false);
                     }}
