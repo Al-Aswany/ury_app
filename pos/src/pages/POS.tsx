@@ -140,7 +140,7 @@ export default function POS() {
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-screen-xl mx-auto p-4">
+          <div className="max-w-screen-xl mx-auto p-4 pb-40">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {filteredItems.map((item) => (
                 <div
