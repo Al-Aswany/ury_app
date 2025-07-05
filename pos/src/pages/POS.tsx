@@ -6,7 +6,7 @@ import ProductDialog from '../components/ProductDialog';
 import { usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
 
-function POSScreen() {
+export default function POS() {
   const {
     menuItems,
     selectedCategory,
@@ -180,5 +180,3 @@ function POSScreen() {
     </div>
   );
 }
-
-export default POSScreen; 
