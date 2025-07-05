@@ -70,7 +70,7 @@ const OrderPanel = () => {
         <EmptyCartUI />
       ) : (
         <>
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto px-6">
             {activeOrders.map((item) => (
               <div
                 key={item.uniqueId}
@@ -79,16 +79,7 @@ const OrderPanel = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <Button
-                        onClick={() => handleEdit(item)}
-                        variant="ghost"
-                        size="icon"
-                        className="text-blue-600 hover:text-blue-700"
-                        title="Edit item"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <h3 className="font-medium text-gray-900 text-sm">{item.name}</h3>
                     </div>
                     {item.selectedVariant && (
                       <p className="text-sm text-gray-600">{item.selectedVariant.name}</p>
@@ -98,10 +89,19 @@ const OrderPanel = () => {
                         {item.selectedAddons.map(addon => addon.name).join(', ')}
                       </p>
                     )}
-                    <p className="text-gray-600">{formatCurrency(calculateItemTotal(item))}</p>
+                    <p className="text-gray-600 text-sm">{formatCurrency(calculateItemTotal(item))}</p>
                   </div>
                   
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                      <Button
+                        onClick={() => handleEdit(item)}
+                        variant="ghost"
+                        size="icon"
+                        className="text-blue-600 hover:text-blue-700"
+                        title="Edit item"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
                     <div className="flex items-center space-x-2">
                       <Button
                         onClick={() => updateQuantity(item.uniqueId!, Math.max(0, item.quantity - 1))}
@@ -111,7 +111,7 @@ const OrderPanel = () => {
                       >
                         -
                       </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
+                      <span className="w-6 text-center">{item.quantity}</span>
                       <Button
                         onClick={() => updateQuantity(item.uniqueId!, item.quantity + 1)}
                         variant="outline"
