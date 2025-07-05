@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
 import { menuData } from '../data/menu-data';
 import { getPosProfileLimitedFields, getPosProfileFull, PosProfileLimited, PosProfileFull } from '../lib/pos-profile-api';
+import { getMenuCourses, MenuCourse } from '../lib/menu-course-api';
 
 export type OrderType = 'dine-in' | 'takeaway' | 'delivery' | 'aggregator';
 
@@ -177,8 +178,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   fetchCategories: async () => {
-    const uniqueCategories = [...new Set(menuData.map(item => item.category))];
-    set({ categories: uniqueCategories });
+    try {
+      set({ loading: true, error: null });
+      const courses = await getMenuCourses();
+      const categoryNames = courses.map((course) => course.name);
+      set({ categories: categoryNames, loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
   },
 
   fetchPaymentModes: async () => {

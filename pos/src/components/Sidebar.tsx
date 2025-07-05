@@ -8,21 +8,12 @@ import {
   Coffee,
   ChefHat
 } from 'lucide-react';
-import { categories, usePOSStore } from '../store/pos-store';
+import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button, Badge } from './ui';
 
-const categoryIcons = {
-  'Breakfast': Coffee,
-  'Lunch': ChefHat,
-  'Burgers': Utensils,
-  'Pizza': Pizza,
-  'Salads': Salad,
-  'Sides': Cookie,
-} as const;
-
 const Sidebar = () => {
-  const { selectedCategory, setSelectedCategory, menuItems } = usePOSStore();
+  const { selectedCategory, setSelectedCategory, menuItems, categories } = usePOSStore();
 
   // Count items per category
   const getCategoryCount = (category: string) => {
@@ -75,9 +66,7 @@ const Sidebar = () => {
           {/* Category Items */}
           <div className="space-y-1">
             {categories.map((category) => {
-              const IconComponent = categoryIcons[category as keyof typeof categoryIcons] || Cookie;
               const count = getCategoryCount(category);
-              
               return (
                 <Button
                   key={category}
@@ -94,12 +83,10 @@ const Sidebar = () => {
                   {selectedCategory === category && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-full" />
                   )}
-                  
                   <div className="flex items-center gap-3 ml-1">
-                    <IconComponent className="w-4 h-4 text-gray-500" />
+                    <Cookie className="w-4 h-4 text-gray-500" />
                     <span>{category}</span>
                   </div>
-                  
                   <Badge variant="secondary" size="sm" className="text-xs text-gray-500 bg-gray-100 min-w-[24px] text-center">
                     {count}
                   </Badge>
