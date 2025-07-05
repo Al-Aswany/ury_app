@@ -117,13 +117,9 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
                 <Button
                   key={room.name}
                   onClick={() => setSelectedRoom(room.name)}
-                  variant={selectedRoom === room.name ? 'default' : 'outline'}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium',
-                    selectedRoom === room.name
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                  )}
+                  variant="tab"
+                  data-selected={selectedRoom === room.name}
+                  className="h-fit"
                 >
                   {room.name}
                 </Button>
@@ -148,7 +144,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
               <span>No tables found</span>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-6">
               {tables.map(table => (
                 <Button
                   key={table.name}
@@ -156,19 +152,20 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
                     setSelectedTable(table.name);
                     onClose();
                   }}
-                  variant={selectedTable === table.name ? 'default' : 'outline'}
+                  variant="outline"
                   className={cn(
-                    'p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors',
+                    'h-fit p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors',
                     selectedTable === table.name
                       ? 'border-primary-600 bg-primary-50'
-                      : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
+                      : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50',
+                    'focus-visible:ring-2 focus-visible:ring-primary-600',
                   )}
                   disabled={table.occupied === 1}
                 >
-                  <TableIcon type={undefined} className="w-8 h-8" />
+                  <Circle className="w-8 h-8" />
                   <div className="text-center">
                     <div className="font-medium">{table.name}</div>
-                    <div className="text-sm text-gray-500">{table.is_take_away ? 'Take Away' : 'Dine In'}</div>
+                    <div className="text-sm text-gray-500">- seats</div>
                   </div>
                 </Button>
               ))}
