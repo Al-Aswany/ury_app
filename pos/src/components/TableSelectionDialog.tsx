@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { X, Circle, Square, RectangleHorizontal, AlertTriangle, Loader } from 'lucide-react';
+import { X, Circle, Square, RectangleHorizontal, AlertTriangle } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { getRooms, getTables, Room, Table } from '../lib/table-api';
 import { Badge } from './ui/badge';
+import { Spinner } from './ui/spinner';
 
 interface Props {
   onClose: () => void;
@@ -117,7 +118,9 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
         <div className="p-4">
           {/* Room Selection */}
           {loadingRooms ? (
-            <div className="mb-6 text-center text-gray-500">Loading rooms...</div>
+            <div className="mb-6">
+              <Spinner message="Loading rooms..." />
+            </div>
           ) : error ? (
             <div className="mb-6 flex flex-col items-center justify-center gap-2 text-red-500">
               <AlertTriangle className="w-8 h-8 mb-1" />
@@ -146,9 +149,8 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
 
           {/* Table Grid */}
           {loadingTables ? (
-            <div className="flex flex-col items-center justify-center gap-2 text-gray-500 mt-8">
-              <Loader className="w-8 h-8 animate-spin mb-1" />
-              <span>Loading tables...</span>
+            <div className="h-96">
+              <Spinner message="Loading tables..." />
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center gap-2 text-red-500 mt-8">

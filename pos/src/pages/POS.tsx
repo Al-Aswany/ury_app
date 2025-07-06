@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, Loader2, TrendingUp } from 'lucide-react';
+import { Star, TrendingUp } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import OrderPanel from '../components/OrderPanel';
 import ProductDialog from '../components/ProductDialog';
@@ -7,6 +7,7 @@ import MenuList from '../components/MenuList';
 import SearchBar from '../components/SearchBar';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
+import { Spinner } from '../components/ui/spinner';
 
 export default function POS() {
   const {
@@ -91,27 +92,18 @@ export default function POS() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-          <p className="text-sm text-gray-600">Loading menu items...</p>
-        </div>
+      <div className="flex-1 flex items-center justify-center">
+        <Spinner message="Loading menu items..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg font-medium text-red-600">Error loading menu</p>
-          <p className="mt-2 text-sm text-gray-600">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-          >
-            Retry
-          </button>
+          <p className="text-sm text-gray-500 mt-2">{error}</p>
         </div>
       </div>
     );

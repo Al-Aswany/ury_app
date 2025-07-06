@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePOSStore } from '../store/pos-store';
 import MenuCard from './MenuCard';
-import { Loader } from 'lucide-react';
+import { Spinner } from './ui/spinner';
 import { cn } from '../lib/utils';
 
 interface MenuListProps {
@@ -35,7 +35,6 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
       const matchesFilter = quickFilter === 'all' || 
         (quickFilter === 'special' && item.special_dish === 1);
       
-      console.log("matchesFilter", matchesCategory);
       return matchesCategory && matchesSearch && matchesFilter;
     });
   }, [menuItems, selectedCategory, searchQuery, quickFilter]);
@@ -44,11 +43,8 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
     <div className="flex-1 overflow-auto bg-gray-50">
       <div className="max-w-screen-xl mx-auto p-4 pb-40">
         {menuLoading ? (
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <Loader className="w-12 h-12 animate-spin text-primary-600 mb-4" />
-              <p className="text-gray-500">Loading menu items...</p>
-            </div>
+          <div className="h-96">
+            <Spinner message="Loading menu items..." />
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-96">

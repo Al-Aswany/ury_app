@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Trash2, Edit, FrownIcon, Plus, Loader } from 'lucide-react';
+import { Trash2, Edit, FrownIcon, Plus } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { formatCurrency, cn } from '../lib/utils';
 import CustomerSelect from './CustomerSelect';
 import ProductDialog from './ProductDialog';
 import OrderTypeSelect from './OrderTypeSelect';
 import PaymentDialog from './PaymentDialog';
-import { Button, Card, CardContent } from './ui';
+import { Button } from './ui/button';
+import { Spinner } from './ui/spinner';
 
 const OrderPanel = () => {
   const { 
@@ -68,9 +69,8 @@ const OrderPanel = () => {
   );
 
   const LoadingOrderUI = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <Loader className="w-12 h-12 text-primary-600 animate-spin mb-4" />
-      <p className="text-gray-500">Loading order details...</p>
+    <div className="h-96">
+      <Spinner message="Loading order details..." />
     </div>
   );
 
