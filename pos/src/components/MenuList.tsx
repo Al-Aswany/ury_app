@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { usePOSStore } from '../store/pos-store';
 import MenuCard from './MenuCard';
 import { Loader } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 interface MenuListProps {
   onItemClick: (item: any) => void;
@@ -10,13 +11,14 @@ interface MenuListProps {
 const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
   const {
     menuItems,
-    loading,
+    menuLoading,
     error,
     selectedCategory,
     searchQuery,
     quickFilter,
     fetchMenuItems,
     setSearchQuery,
+    isMenuInteractionDisabled
   } = usePOSStore();
 
   useEffect(() => {
@@ -37,29 +39,24 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
     });
   }, [menuItems, selectedCategory, searchQuery, quickFilter]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader className="w-8 h-8 animate-spin text-primary-600" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-red-600 text-center">
-          <p className="text-lg font-medium">Error loading menu items</p>
-          <p className="text-sm mt-2">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
       <div className="max-w-screen-xl mx-auto p-4 pb-40">
-        {filteredItems.length === 0 ? (
+        {menuLoading ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <Loader className="w-12 h-12 animate-spin text-primary-600 mb-4" />
+              <p className="text-gray-500">Loading menu items...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="text-red-600 text-center">
+              <p className="text-lg font-medium">Error loading menu items</p>
+              <p className="text-sm mt-2">{error}</p>
+            </div>
+          </div>
+        ) : filteredItems.length === 0 ? (
           <div className="flex items-center justify-center h-96">
             <div className="text-gray-500 text-center">
               <p className="text-lg font-medium">No items found</p>
@@ -67,7 +64,10 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className={cn(
+            "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3",
+            isMenuInteractionDisabled() && "opacity-50 pointer-events-none"
+          )}>
             {filteredItems.map((item) => (
               <MenuCard
                 key={item.id}
@@ -78,6 +78,7 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
                 course={item.course}
                 item={item.item}
                 onClick={() => onItemClick(item)}
+                disabled={isMenuInteractionDisabled()}
               />
             ))}
           </div>

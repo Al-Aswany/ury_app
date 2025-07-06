@@ -6,6 +6,8 @@ import { Select, SelectItem } from './ui';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
 import { addCustomer, type CreateCustomerData, searchCustomers } from '../lib/customer-api';
+import { cn } from '../lib/utils';
+import { X } from 'lucide-react';
 
 // NewCustomerForm component
 function NewCustomerForm({ 
@@ -206,7 +208,11 @@ function NewCustomerForm({
   );
 }
 
-const CustomerSelect = () => {
+interface CustomerSelectProps {
+  disabled?: boolean;
+}
+
+const CustomerSelect = ({ disabled }: CustomerSelectProps) => {
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

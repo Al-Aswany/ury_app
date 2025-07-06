@@ -6,7 +6,11 @@ import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button, Badge } from './ui';
 
-const Sidebar = () => {
+interface SidebarProps {
+  disabled?: boolean;
+}
+
+const Sidebar = ({ disabled }: SidebarProps) => {
   const { selectedCategory, setSelectedCategory, menuItems, categories } = usePOSStore();
 
   // Count items per category
@@ -23,7 +27,10 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
+    <div className={cn(
+      "w-64 bg-white border-r border-gray-200 h-screen flex flex-col",
+      disabled && "opacity-50 pointer-events-none"
+    )}>
       {/* Categories List */}
       <nav className="flex-1 p-6 overflow-y-auto">
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -42,6 +49,7 @@ const Sidebar = () => {
                 ? 'bg-white text-gray-900 shadow-sm font-semibold'
                 : 'text-gray-700 hover:bg-white/60 hover:text-gray-900'
             )}
+            disabled={disabled}
           >
             {/* Active indicator bar */}
             {selectedCategory === '' && (
@@ -76,6 +84,7 @@ const Sidebar = () => {
                       ? 'bg-white text-gray-900 shadow-sm font-semibold'
                       : 'text-gray-700 hover:bg-white/60 hover:text-gray-900'
                   )}
+                  disabled={disabled}
                 >
                   {/* Active indicator bar */}
                   {selectedCategory === category && (

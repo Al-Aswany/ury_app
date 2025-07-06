@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, cn } from '../lib/utils';
 
 interface MenuCardProps {
   id: string;
@@ -7,15 +7,28 @@ interface MenuCardProps {
   price: number;
   item_image: string | null;
   course?: string;
-  item: string;  // Add item code to props
+  item: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
-const MenuCard: FC<MenuCardProps> = ({ id, name, price, item_image, course, item, onClick }) => {
+const MenuCard: FC<MenuCardProps> = ({ 
+  id, 
+  name, 
+  price, 
+  item_image, 
+  course, 
+  item, 
+  onClick,
+  disabled 
+}) => {
   return (
     <div
-      className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer h-56 flex flex-col"
-      onClick={onClick}
+      className={cn(
+        "bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer h-56 flex flex-col",
+        disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+      )}
+      onClick={disabled ? undefined : onClick}
     >
       {/* Image section - fixed height */}
       <div className="h-24">

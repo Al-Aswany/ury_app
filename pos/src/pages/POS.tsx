@@ -21,7 +21,9 @@ export default function POS() {
     fetchPosProfile,
     loading,
     error,
-    posProfile
+    posProfile,
+    isMenuInteractionDisabled,
+    isOrderInteractionDisabled
   } = usePOSStore();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -45,6 +47,8 @@ export default function POS() {
   }, [showSearch]);
 
   const handleItemClick = (item: any) => {
+    if (isMenuInteractionDisabled()) return;
+    
     clickCountRef.current += 1;
     
     if (clickTimerRef.current) {
@@ -75,8 +79,10 @@ export default function POS() {
         'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
         quickFilter === filter
           ? 'bg-blue-100 text-blue-700'
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+        isMenuInteractionDisabled() && 'opacity-50 cursor-not-allowed pointer-events-none'
       )}
+      disabled={isMenuInteractionDisabled()}
     >
       <Icon className="w-4 h-4" />
       {label}
@@ -113,7 +119,7 @@ export default function POS() {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <Sidebar />
+      <Sidebar disabled={isMenuInteractionDisabled()} />
       <div className="flex-1 flex flex-col h-screen overflow-hidden pr-96">
         <div className="p-4 bg-white border-b border-gray-200">
           <div className="max-w-screen-xl mx-auto space-y-3">
@@ -123,6 +129,7 @@ export default function POS() {
                 onChange={setSearchQuery}
                 onVisibilityChange={setShowSearch}
                 isVisible={showSearch}
+                disabled={isMenuInteractionDisabled()}
               />
               
               <QuickFilterButton filter="all" icon={Star} label="All" />

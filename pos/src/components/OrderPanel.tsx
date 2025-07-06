@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Edit, FrownIcon, Plus } from 'lucide-react';
+import { Trash2, Edit, FrownIcon, Plus, Loader } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { formatCurrency, cn } from '../lib/utils';
 import CustomerSelect from './CustomerSelect';
@@ -9,7 +9,15 @@ import PaymentDialog from './PaymentDialog';
 import { Button, Card, CardContent } from './ui';
 
 const OrderPanel = () => {
-  const { activeOrders, removeFromOrder, updateQuantity, clearOrder, setSelectedItem } = usePOSStore();
+  const { 
+    activeOrders, 
+    removeFromOrder, 
+    updateQuantity, 
+    clearOrder, 
+    setSelectedItem,
+    orderLoading,
+    isOrderInteractionDisabled 
+  } = usePOSStore();
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
   const [showPayment, setShowPayment] = useState(false);
 
@@ -59,14 +67,23 @@ const OrderPanel = () => {
     </div>
   );
 
+  const LoadingOrderUI = () => (
+    <div className="flex-1 flex flex-col items-center justify-center p-8">
+      <Loader className="w-12 h-12 text-primary-600 animate-spin mb-4" />
+      <p className="text-gray-500">Loading order details...</p>
+    </div>
+  );
+
   return (
     <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-10">
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <OrderTypeSelect />
-        <div className="mt-3"><CustomerSelect /></div>
+        <OrderTypeSelect disabled={isOrderInteractionDisabled()} />
+        <div className="mt-3"><CustomerSelect disabled={isOrderInteractionDisabled()} /></div>
       </div>
       
-      {activeOrders.length === 0 ? (
+      {orderLoading ? (
+        <LoadingOrderUI />
+      ) : activeOrders.length === 0 ? (
         <EmptyCartUI />
       ) : (
         <>
@@ -74,7 +91,10 @@ const OrderPanel = () => {
             {activeOrders.map((item) => (
               <div
                 key={item.uniqueId}
-                className="flex flex-col py-4 border-b border-gray-100"
+                className={cn(
+                  "flex flex-col py-4 border-b border-gray-100",
+                  isOrderInteractionDisabled() && "opacity-50"
+                )}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -93,21 +113,23 @@ const OrderPanel = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                      <Button
-                        onClick={() => handleEdit(item)}
-                        variant="ghost"
-                        size="icon"
-                        className="text-blue-600 hover:text-blue-700"
-                        title="Edit item"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                    <Button
+                      onClick={() => handleEdit(item)}
+                      variant="ghost"
+                      size="icon"
+                      className="text-blue-600 hover:text-blue-700"
+                      title="Edit item"
+                      disabled={isOrderInteractionDisabled()}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
                     <div className="flex items-center space-x-2">
                       <Button
                         onClick={() => updateQuantity(item.uniqueId!, Math.max(0, item.quantity - 1))}
                         variant="outline"
                         size="icon"
                         className="w-8 h-8 rounded-full"
+                        disabled={isOrderInteractionDisabled()}
                       >
                         -
                       </Button>
@@ -117,6 +139,7 @@ const OrderPanel = () => {
                         variant="outline"
                         size="icon"
                         className="w-8 h-8 rounded-full"
+                        disabled={isOrderInteractionDisabled()}
                       >
                         +
                       </Button>
@@ -127,6 +150,7 @@ const OrderPanel = () => {
                       variant="ghost"
                       size="icon"
                       className="text-red-500 hover:text-red-600"
+                      disabled={isOrderInteractionDisabled()}
                     >
                       <Trash2 className="w-5 h-5" />
                     </Button>
@@ -140,6 +164,7 @@ const OrderPanel = () => {
                 variant="ghost"
                 size="sm"
                 className="w-full text-gray-600 hover:text-gray-800 mt-4"
+                disabled={isOrderInteractionDisabled()}
               >
                 Clear cart
               </Button>
@@ -156,6 +181,7 @@ const OrderPanel = () => {
               variant="default"
               size="default"
               className="w-full"
+              disabled={isOrderInteractionDisabled()}
             >
               Checkout
             </Button>

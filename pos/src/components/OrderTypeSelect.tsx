@@ -6,8 +6,11 @@ import TableSelectionDialog from './TableSelectionDialog';
 import { DINE_IN, ORDER_TYPES , type OrderType} from '../data/order-types';
 import { HandPlatter } from 'lucide-react';
 
+interface OrderTypeSelectProps {
+  disabled?: boolean;
+}
 
-const OrderTypeSelect = () => {
+const OrderTypeSelect = ({ disabled }: OrderTypeSelectProps) => {
   const { selectedOrderType, setSelectedOrderType, selectedTable } = usePOSStore();
   const [showTableDialog, setShowTableDialog] = useState(false);
 
@@ -31,8 +34,10 @@ const OrderTypeSelect = () => {
                 'h-fit flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap bg-white border transition-colors',
                 selectedOrderType === value
                 ? 'text-primary-700 bg-primary-50 border-primary-600 hover:bg-primary-50'
-                : 'text-gray-700 border-gray-200 hover:bg-gray-50'
+                : 'text-gray-700 border-gray-200 hover:bg-gray-50',
+                disabled && 'opacity-50 cursor-not-allowed'
               )}
+              disabled={disabled}
             >
               <Icon className="w-4 h-4" />
               {label}
@@ -46,6 +51,7 @@ const OrderTypeSelect = () => {
           onClick={() => setShowTableDialog(true)}
           variant="ghost"
           className="h-fit w-fit gap-x-2 mt-2 text-sm text-primary-600 hover:text-primary-700"
+          disabled={disabled}
         >
           <HandPlatter className="w-4 h-4" /> {selectedTable}
         </Button>
