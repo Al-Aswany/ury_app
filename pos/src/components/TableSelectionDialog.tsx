@@ -165,7 +165,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
                 <Button
                   key={table.name}
                   onClick={() => {
-                    setSelectedTable(table.name);
+                    setSelectedTable(table.name, selectedRoom);
                     onClose();
                   }}
                   variant="outline"

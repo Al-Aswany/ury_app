@@ -18,13 +18,13 @@ export interface GetMenuResponse {
   };
 }
 
-export const getRestaurantMenu = async (posProfile: string, orderType?: string) => {
+export const getRestaurantMenu = async (posProfile: string, room: string | null) => {
   try {
     const response = await call.get<GetMenuResponse>(
       'ury.ury_pos.api.getRestaurantMenu',
       {
         pos_profile: posProfile,
-        order_type: orderType || null
+        room: room
       }
     );
     return response.message.items;

@@ -81,9 +81,11 @@ interface POSState {
   categories: string[];
   activeOrders: OrderItem[];
   selectedCategory: string;
+  selectedTable: string | null;
+  selectedRoom: string | null; // Add selected room to state
   searchQuery: string;
   selectedCustomer: Customer | null;
-  selectedTable: string | null;
+  selectedOrderType: OrderType;
   quickFilter: 'all' | 'special';
   selectedItem: MenuItem | null;
   cartId: string | null;
@@ -92,7 +94,6 @@ interface POSState {
   error: string | null;
   paymentModes: PaymentMode[];
   orders: Order[];
-  selectedOrderType: OrderType;
   selectedAggregator: string | null;
   currency: string;
   currencySymbol: string | null;
@@ -108,7 +109,7 @@ interface POSState {
   setSelectedCategory: (category: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCustomer: (customer: Customer | null) => void;
-  setSelectedTable: (table: string | null) => void;
+  setSelectedTable: (table: string | null, room: string | null) => void; // Update to include room
   setSelectedOrderType: (type: OrderType) => void;
   setQuickFilter: (filter: 'all' | 'special') => void;
   setSelectedItem: (item: MenuItem | null) => void;
@@ -147,6 +148,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   activeOrders: [],
   selectedCategory: '',
   selectedTable: null,
+  selectedRoom: null, // Initialize selected room
   searchQuery: '',
   selectedCustomer: null,
   selectedOrderType: DEFAULT_ORDER_TYPE as OrderType,
@@ -225,15 +227,15 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   fetchMenuItems: async () => {
-    const { posProfile, selectedOrderType } = get();
+    const { posProfile, selectedRoom } = get();
     if (!posProfile) {
       set({ error: 'POS Profile not found' });
       return;
     }
 
     try {
-      set({ menuLoading: true, error: null }); // Use menuLoading instead of loading
-      const items = await getRestaurantMenu(posProfile.name, selectedOrderType);
+      set({ menuLoading: true, error: null });
+      const items = await getRestaurantMenu(posProfile.name, selectedRoom);
       
       // Transform API items to match the UI format
       const menuItems: MenuItem[] = items.map(item => ({
@@ -245,9 +247,9 @@ export const usePOSStore = create<POSState>((set, get) => ({
         category: item.course
       }));
 
-      set({ menuItems, menuLoading: false }); // Use menuLoading instead of loading
+      set({ menuItems, menuLoading: false });
     } catch (error) {
-      set({ error: (error as Error).message, menuLoading: false }); // Use menuLoading instead of loading
+      set({ error: (error as Error).message, menuLoading: false });
     }
   },
 
@@ -379,7 +381,13 @@ export const usePOSStore = create<POSState>((set, get) => ({
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedCustomer: (customer) => set({ selectedCustomer: customer }),
-  setSelectedTable: (table) => set({ selectedTable: table }),
+  setSelectedTable: (table: string | null, room: string | null) => {
+    set({ selectedTable: table, selectedRoom: room });
+    // Fetch menu items when room changes
+    if (room) {
+      get().fetchMenuItems();
+    }
+  },
   setSelectedOrderType: (type) => set({ selectedOrderType: type }),
   setQuickFilter: (filter) => set({ quickFilter: filter }),
   setSelectedItem: (item) => set({ selectedItem: item }),
