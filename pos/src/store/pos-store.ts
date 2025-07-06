@@ -6,6 +6,7 @@ import { getPosProfileLimitedFields, getPosProfileFull, getCurrencyInfo, PosProf
 import { getMenuCourses } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
+import { getTableOrder, TableOrder } from '../lib/order-api';
 
 // Constants
 const MAX_QUANTITY = 99;
@@ -128,6 +129,9 @@ interface POSState {
   validateQuantity: (quantity: number) => boolean;
   getItemPrice: (item: OrderItem) => number;
   getItemQuantityFromCart: (item: MenuItem) => number;
+  tableOrder: TableOrder | null;
+  loadTableOrder: (table: string) => Promise<void>;
+  clearTableOrder: () => void;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -166,6 +170,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   selectedAggregator: null,
   currency: storage.getItem('currency') || 'INR',
   currencySymbol: storage.getItem('currencySymbol') || null,
+  tableOrder: null,
 
   fetchPosProfile: async () => {
     try {
@@ -383,6 +388,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
   setSelectedCustomer: (customer) => set({ selectedCustomer: customer }),
   setSelectedTable: (table: string | null, room: string | null) => {
     set({ selectedTable: table, selectedRoom: room });
+    if (table) {
+      get().loadTableOrder(table);
+    } else {
+      get().clearTableOrder();
+    }
     // Fetch menu items when room changes
     if (room) {
       get().fetchMenuItems();
@@ -501,5 +511,59 @@ export const usePOSStore = create<POSState>((set, get) => ({
     const uniqueId = generateUniqueId(item as OrderItem);
     const cartItem = get().activeOrders.find(orderItem => orderItem.uniqueId === uniqueId);
     return cartItem?.quantity || 0;
+  },
+
+  loadTableOrder: async (table: string) => {
+    try {
+      set({ loading: true, error: null });
+      const response = await getTableOrder(table);
+      
+      // If there's an existing order, set it in the state
+      if (response.message) {
+        const order = response.message;
+        // Convert the order items to our internal format
+        const orderItems: OrderItem[] = order.items.map(item => ({
+          id: item.item_code,
+          name: item.item_name,
+          price: item.rate,
+          quantity: item.qty,
+          amount: item.amount,
+          image: item.image || null,
+          uniqueId: uuidv4(), // Generate a new unique ID for each item
+          item: item.item_code,
+          item_name: item.item_name,
+          item_image: null,
+          item_imgae: null,
+          course: '', // Empty string instead of null
+          description: item.description || '',
+          special_dish: 0,
+          tax_rate: 0,
+        }));
+
+        // Set the order in our state
+        set({ 
+          tableOrder: response,
+          activeOrders: orderItems,
+          selectedCustomer: {
+            id: order.customer,
+            name: order.customer_name,
+            phone: order.mobile_number,
+          },
+        });
+      }
+    } catch (error) {
+      set({ error: 'Failed to load table order' });
+      console.error('Error loading table order:', error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  clearTableOrder: () => {
+    set({ 
+      tableOrder: null,
+      activeOrders: [],
+      selectedCustomer: null,
+    });
   }
 })); 
