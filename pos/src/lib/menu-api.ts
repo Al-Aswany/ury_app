@@ -10,6 +10,7 @@ export interface MenuItem {
   popular?: boolean;
   recommended?: boolean;
   description?: string;
+  special_dish?: 1 | 0;
 }
 
 export interface GetMenuResponse {

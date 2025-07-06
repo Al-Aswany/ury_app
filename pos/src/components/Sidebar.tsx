@@ -16,13 +16,11 @@ const Sidebar = ({ disabled }: SidebarProps) => {
   // Count items per category
   const getCategoryCount = (category: string) => {
     const count = menuItems.filter(item => item.course === category).length;
-    console.log(`Category: ${category}, Count: ${count}, Items:`, menuItems.filter(item => item.course === category));
     return count;
   };
 
   const getAllItemsCount = () => {
     const count = menuItems.length;
-    console.log('Total Items:', count, 'Menu Items:', menuItems);
     return count;
   };
 
