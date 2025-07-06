@@ -27,7 +27,22 @@ export interface PosProfileLimitedResponse {
   message: PosProfileLimited;
 }
 
-// Full POS Profile response (partial, extend as needed)
+interface RolePermission {
+  name: string;
+  owner: string;
+  creation: string;
+  modified: string;
+  modified_by: string;
+  docstatus: number;
+  idx: number;
+  role: string;
+  parent: string;
+  parentfield: string;
+  parenttype: string;
+  doctype: string;
+}
+
+// Full POS Profile response
 export interface PosProfileFull {
   name: string;
   owner: string;
@@ -46,7 +61,7 @@ export interface PosProfileFull {
   restaurant: string;
   branch: string;
   currency: string;
-  // ... other fields
+  role_allowed_for_billing: RolePermission[];
 }
 
 export interface Currency {
@@ -61,7 +76,6 @@ export interface Currency {
 export interface PosProfileFullResponse {
   message: PosProfileFull;
 }
-
 
 export async function getPosProfileLimitedFields(): Promise<PosProfileLimited> {
   const res = await call.get('ury.ury_pos.api.getPosProfile');
