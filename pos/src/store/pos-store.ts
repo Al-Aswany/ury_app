@@ -135,6 +135,8 @@ interface POSState {
   clearTableOrder: () => void;
   isMenuInteractionDisabled: () => boolean;
   isOrderInteractionDisabled: () => boolean;
+  isInitializing: boolean;
+  initializeApp: () => Promise<void>;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -176,6 +178,38 @@ export const usePOSStore = create<POSState>((set, get) => ({
   currency: storage.getItem('currency') || 'INR',
   currencySymbol: storage.getItem('currencySymbol') || null,
   tableOrder: null,
+  isInitializing: true,
+
+  initializeApp: async () => {
+    try {
+      set({ isInitializing: true, error: null });
+      
+      // Load profile, menu, and categories in parallel
+      const [profileResult, menuResult, categoriesResult] = await Promise.allSettled([
+        get().fetchPosProfile(),
+        get().fetchMenuItems(),
+        get().fetchCategories()
+      ]);
+
+      // Handle any errors
+      if (profileResult.status === 'rejected' || 
+          menuResult.status === 'rejected' || 
+          categoriesResult.status === 'rejected') {
+        set({ 
+          error: 'Failed to initialize app. Please refresh the page.',
+          isInitializing: false 
+        });
+        return;
+      }
+
+      set({ isInitializing: false });
+    } catch (error) {
+      set({ 
+        error: 'Failed to initialize app. Please refresh the page.',
+        isInitializing: false 
+      });
+    }
+  },
 
   fetchPosProfile: async () => {
     try {
@@ -190,7 +224,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         });
         // Fetch currency symbol if not in storage
         if (!storage.getItem('currencySymbol')) {
-          get().fetchCurrencySymbol();
+          await get().fetchCurrencySymbol();
         }
         return;
       }
@@ -213,10 +247,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
       // Fetch currency symbol if not in storage
       if (!storage.getItem('currencySymbol')) {
-        get().fetchCurrencySymbol();
+        await get().fetchCurrencySymbol();
       }
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ profileLoading: false, error: 'Failed to load profile' });
+      throw error; // Re-throw to be caught by initializeApp
     }
   },
 
@@ -295,12 +330,20 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
   fetchCategories: async () => {
     try {
-      set({ loading: true, error: null });
+      const cached = sessionStorage.getItem('menuCategories');
+      if (cached) {
+        const categories = JSON.parse(cached);
+        set({ categories });
+        return;
+      }
+
       const courses = await getMenuCourses();
-      const categoryNames = courses.map((course) => course.name);
-      set({ categories: categoryNames, loading: false });
+      const categoryNames = courses.map(course => course.name);
+      sessionStorage.setItem('menuCategories', JSON.stringify(categoryNames));
+      set({ categories: categoryNames });
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: 'Failed to load menu categories' });
+      throw error; // Re-throw to be caught by initializeApp
     }
   },
 

@@ -108,7 +108,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="bg-white rounded-lg w-full max-w-2xl mx-auto p-0">
+      <DialogContent className="bg-white rounded-lg w-full h-5/6 max-w-2xl mx-auto p-0 overflow-y-auto">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-900">Select Table</h2>
           <Button onClick={onClose} variant="ghost" size="icon">
@@ -149,7 +149,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
 
           {/* Table Grid */}
           {loadingTables ? (
-            <div className="h-96">
+            <div className="">
               <Spinner message="Loading tables..." />
             </div>
           ) : error ? (

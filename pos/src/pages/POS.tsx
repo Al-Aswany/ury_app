@@ -8,6 +8,7 @@ import SearchBar from '../components/SearchBar';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Spinner } from '../components/ui/spinner';
+import InitialLoader from '../components/InitialLoader';
 
 export default function POS() {
   const {
@@ -24,7 +25,9 @@ export default function POS() {
     error,
     posProfile,
     isMenuInteractionDisabled,
-    isOrderInteractionDisabled
+    isOrderInteractionDisabled,
+    initializeApp,
+    isInitializing,
   } = usePOSStore();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,12 +36,8 @@ export default function POS() {
   const clickCountRef = useRef(0);
 
   useEffect(() => {
-    const initializeData = async () => {
-      await fetchPosProfile();
-      await fetchCategories();
-    };
-    initializeData();
-  }, [fetchPosProfile, fetchCategories]);
+    initializeApp();
+  }, [initializeApp]);
 
   useEffect(() => {
     if (showSearch) {
@@ -89,6 +88,27 @@ export default function POS() {
       {label}
     </button>
   );
+
+  if (isInitializing) {
+    return <InitialLoader />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-xl font-semibold text-red-600 mb-2">Failed to load POS</p>
+          <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
