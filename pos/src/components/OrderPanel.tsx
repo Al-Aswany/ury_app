@@ -5,7 +5,6 @@ import { formatCurrency, cn } from '../lib/utils';
 import CustomerSelect from './CustomerSelect';
 import ProductDialog from './ProductDialog';
 import OrderTypeSelect from './OrderTypeSelect';
-import PaymentDialog from './PaymentDialog';
 import { Button } from './ui/button';
 import { Spinner } from './ui/spinner';
 
@@ -17,10 +16,10 @@ const OrderPanel = () => {
     clearOrder, 
     setSelectedItem,
     orderLoading,
-    isOrderInteractionDisabled 
+    isOrderInteractionDisabled,
+    isUpdatingOrder
   } = usePOSStore();
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
 
   const calculateItemTotal = (item: typeof activeOrders[0]) => {
     const basePrice = item.selectedVariant?.price || item.price;
@@ -177,13 +176,15 @@ const OrderPanel = () => {
               <span className="text-lg font-semibold">{formatCurrency(total)}</span>
             </div>
             <Button
-              onClick={() => setShowPayment(true)}
+              onClick={() => {
+                // TODO: Implement order creation/update logic
+              }}
               variant="default"
               size="default"
               className="w-full"
               disabled={isOrderInteractionDisabled()}
             >
-              Checkout
+              {isUpdatingOrder ? 'Update Order' : 'Add New Order'}
             </Button>
           </div>
         </>
@@ -200,13 +201,6 @@ const OrderPanel = () => {
           initialAddons={editingItem.selectedAddons}
           initialQuantity={editingItem.quantity}
           itemToReplace={editingItem}
-        />
-      )}
-
-      {showPayment && (
-        <PaymentDialog
-          onClose={() => setShowPayment(false)}
-          totalAmount={total}
         />
       )}
     </div>

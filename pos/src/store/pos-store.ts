@@ -100,6 +100,8 @@ interface POSState {
   selectedAggregator: string | null;
   currency: string;
   currencySymbol: string | null;
+  isUpdatingOrder: boolean; // Flag to track if we're updating an existing order
+  orderId: string | null; // ID of the order being updated
   fetchMenuItems: () => Promise<void>;
   fetchAggregatorMenu: (aggregator: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -137,6 +139,7 @@ interface POSState {
   isOrderInteractionDisabled: () => boolean;
   isInitializing: boolean;
   initializeApp: () => Promise<void>;
+  setOrderForUpdate: (orderId: string | null) => void; // Function to set order update mode
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -179,6 +182,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
   currencySymbol: storage.getItem('currencySymbol') || null,
   tableOrder: null,
   isInitializing: true,
+  isUpdatingOrder: false,
+  orderId: null,
 
   initializeApp: async () => {
     try {
@@ -595,18 +600,28 @@ export const usePOSStore = create<POSState>((set, get) => ({
             name: order.customer_name,
             phone: order.mobile_number,
           } : null,
+          isUpdatingOrder: true, // Set update mode
+          orderId: order.name, // Set the order ID
         });
       } else {
         // No active order for this table, clear the state
-        set({
+        set({ 
           tableOrder: null,
           activeOrders: [],
           selectedCustomer: null,
+          isUpdatingOrder: false,
+          orderId: null,
         });
       }
     } catch (error) {
-      set({ error: 'Failed to load table order' });
-      console.error('Error loading table order:', error);
+      set({ 
+        error: 'Failed to load table order',
+        tableOrder: null,
+        activeOrders: [],
+        selectedCustomer: null,
+        isUpdatingOrder: false,
+        orderId: null,
+      });
     } finally {
       set({ orderLoading: false });
     }
@@ -617,6 +632,15 @@ export const usePOSStore = create<POSState>((set, get) => ({
       tableOrder: null,
       activeOrders: [],
       selectedCustomer: null,
+      isUpdatingOrder: false,
+      orderId: null,
+    });
+  },
+
+  setOrderForUpdate: (orderId: string | null) => {
+    set({ 
+      isUpdatingOrder: orderId !== null,
+      orderId,
     });
   },
 
