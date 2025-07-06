@@ -104,7 +104,6 @@ interface POSState {
   fetchAggregatorMenu: (aggregator: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchPaymentModes: () => Promise<void>;
-  fetchOrders: () => Promise<void>;
   addToOrder: (item: OrderItem) => Promise<void>;
   removeFromOrder: (uniqueId: string) => Promise<void>;
   updateQuantity: (uniqueId: string, quantity: number) => Promise<void>;
@@ -309,15 +308,6 @@ export const usePOSStore = create<POSState>((set, get) => ({
     // TODO: Implement payment modes fetch from API
   },
 
-  fetchOrders: async () => {
-    try {
-      const orders = storage.getOrders();
-      set({ orders });
-    } catch (error) {
-      set({ error: (error as Error).message });
-    }
-  },
-
   initializeCart: async () => {
     set({ cartId: uuidv4() });
   },
@@ -440,7 +430,6 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
       const newOrders = [...get().orders, order];
       set({ orders: newOrders });
-      storage.saveOrders(newOrders);
       
       // Clear cart after successful payment
       await get().clearOrder();
@@ -457,7 +446,6 @@ export const usePOSStore = create<POSState>((set, get) => ({
           : order
       );
       set({ orders: newOrders });
-      storage.saveOrders(newOrders);
     } catch (error) {
       set({ error: (error as Error).message });
     }
