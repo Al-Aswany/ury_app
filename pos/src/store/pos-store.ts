@@ -559,11 +559,18 @@ export const usePOSStore = create<POSState>((set, get) => ({
         set({ 
           tableOrder: response,
           activeOrders: orderItems,
-          selectedCustomer: {
+          selectedCustomer: order.customer ? {
             id: order.customer,
             name: order.customer_name,
             phone: order.mobile_number,
-          },
+          } : null,
+        });
+      } else {
+        // No active order for this table, clear the state
+        set({
+          tableOrder: null,
+          activeOrders: [],
+          selectedCustomer: null,
         });
       }
     } catch (error) {
