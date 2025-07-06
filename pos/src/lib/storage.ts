@@ -1,15 +1,4 @@
-import { Order } from '../store/pos-store';
-
 export const storage = {
-  saveOrders: (orders: Order[]) => {
-    localStorage.setItem('orders', JSON.stringify(orders));
-  },
-
-  getOrders: (): Order[] => {
-    const orders = localStorage.getItem('orders');
-    return orders ? JSON.parse(orders) : [];
-  },
-
   savePosProfileFull: (profile: unknown) => {
     localStorage.setItem('pos_profile', JSON.stringify(profile));
   },
