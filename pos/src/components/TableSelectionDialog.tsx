@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { getRooms, getTables, Room, Table } from '../lib/table-api';
+import { Badge } from './ui/badge';
 
 interface Props {
   onClose: () => void;
@@ -170,18 +171,30 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
                   }}
                   variant="outline"
                   className={cn(
-                    'h-fit p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors',
+                    'h-fit p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors relative',
                     selectedTable === table.name
                       ? 'border-primary-600 bg-primary-50'
+                      : table.occupied === 1
+                      ? 'border-amber-500 bg-amber-50 hover:border-amber-600 hover:bg-amber-100'
                       : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50',
                     'focus-visible:ring-2 focus-visible:ring-primary-600',
                   )}
-                  disabled={table.occupied === 1}
                 >
-                  <Circle className="w-8 h-8" />
+                  <Square 
+                    className={cn(
+                      'w-8 h-8',
+                      table.occupied === 1 ? 'text-amber-500' : 'text-gray-500'
+                    )} 
+                  />
                   <div className="text-center">
                     <div className="font-medium">{table.name}</div>
-                    <div className="text-sm text-gray-500">- seats</div>
+                    <div className="mt-2 h-4"> {/* Height placeholder that matches Badge height */}
+                      {table.occupied === 1 && (
+                        <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 hover:bg-amber-100">
+                          Occupied
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </Button>
               ))}
