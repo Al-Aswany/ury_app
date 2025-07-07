@@ -289,12 +289,12 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   },
 
   fetchMenuItems: async () => {
-    const { posProfile, selectedRoom } = get();
+    const { posProfile, selectedRoom, selectedOrderType } = get();
     if (!posProfile?.restaurant) return;
 
     try {
       set({ menuLoading: true, error: null });
-      const items = await getRestaurantMenu(posProfile.name, selectedRoom);
+      const items = await getRestaurantMenu(posProfile.name, selectedRoom, selectedOrderType);
       
       // Transform API items to match the UI format
       const menuItems: MenuItem[] = items.map(item => ({
@@ -468,7 +468,20 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       get().fetchMenuItems();
     }
   },
-  setSelectedOrderType: (type) => set({ selectedOrderType: type }),
+  setSelectedOrderType: (type) => {
+    const { resetOrderState, fetchMenuItems } = get();
+    
+    // Reset all states first
+    resetOrderState();
+    
+    // Set the new order type
+    set({ selectedOrderType: type });
+    
+    // Fetch menu items for the new order type
+    if (type !== 'Aggregators') {
+      fetchMenuItems();
+    }
+  },
   setQuickFilter: (filter) => set({ quickFilter: filter }),
   setSelectedItem: (item) => set({ selectedItem: item }),
   setSelectedAggregator: (aggregator) => set({ selectedAggregator: aggregator }),
@@ -662,7 +675,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   resetOrderState: () => {
     set({
       selectedCustomer: null,
-      selectedOrderType: DEFAULT_ORDER_TYPE,
       selectedTable: null,
       selectedRoom: null,
       selectedAggregator: null,
@@ -670,7 +682,9 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       orderId: null,
       activeOrders: [],
       selectedItem: null,
-      orderLoading: false
+      orderLoading: false,
+      menuItems: [], // Clear menu items when resetting
+      error: null
     });
   },
 

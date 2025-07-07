@@ -23,13 +23,14 @@ export interface GetAggregatorMenuResponse {
   message: MenuItem[];
 }
 
-export const getRestaurantMenu = async (posProfile: string, room: string | null) => {
+export const getRestaurantMenu = async (posProfile: string, room: string | null, order_type: string | null) => {
   try {
     const response = await call.get<GetMenuResponse>(
       'ury.ury_pos.api.getRestaurantMenu',
       {
         pos_profile: posProfile,
-        room: room
+        room: room,
+        order_type: order_type
       }
     );
     return response.message.items;
