@@ -11,6 +11,7 @@ import { syncOrder } from '../lib/order-api';
 import { useRootStore } from '../store/root-store';
 import type { RootState } from '../store/root-store';
 import { showToast } from './ui/toast';
+import { DINE_IN } from '../data/order-types';
 
 const OrderPanel = () => {
   const { 
@@ -56,8 +57,6 @@ const OrderPanel = () => {
 
   const handleSubmit = async () => {
     try {
-      setIsSubmitting(true);
-
       if (!posProfile) {
         throw new Error('POS Profile not found');
       }
@@ -65,6 +64,20 @@ const OrderPanel = () => {
       if (!user?.name) {
         throw new Error('User not logged in');
       }
+
+      // Validate customer details
+      if (!selectedCustomer?.name) {
+        showToast.error('Please select a customer before proceeding');
+        return;
+      }
+
+      // Validate table selection for dine-in orders
+      if (selectedOrderType === DINE_IN && !selectedTable) {
+        showToast.error(`Please select a table for ${DINE_IN} orders`);
+        return;
+      }
+
+      setIsSubmitting(true);
 
       const orderData = {
         items: activeOrders.map(item => ({
@@ -78,7 +91,7 @@ const OrderPanel = () => {
         order_type: selectedOrderType,
         table: selectedTable || undefined,
         room: selectedRoom || undefined,
-        customer: selectedCustomer?.name || undefined,
+        customer: selectedCustomer.name,
         aggregator_id: selectedAggregator || undefined,
         cashier: posProfile.cashier,
         owner: user.name,
