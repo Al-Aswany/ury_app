@@ -141,6 +141,7 @@ interface POSState {
   isInitializing: boolean;
   initializeApp: () => Promise<void>;
   setOrderForUpdate: (orderId: string | null) => void; // Function to set order update mode
+  resetOrderState: () => void;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -640,6 +641,21 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ 
       isUpdatingOrder: orderId !== null,
       orderId,
+    });
+  },
+
+  resetOrderState: () => {
+    set({
+      selectedCustomer: null,
+      selectedOrderType: DEFAULT_ORDER_TYPE,
+      selectedTable: null,
+      selectedRoom: null,
+      selectedAggregator: null,
+      isUpdatingOrder: false,
+      orderId: null,
+      activeOrders: [],
+      selectedItem: null,
+      orderLoading: false
     });
   },
 

@@ -28,7 +28,8 @@ const OrderPanel = () => {
     selectedTable,
     selectedRoom,
     selectedCustomer,
-    selectedAggregator
+    selectedAggregator,
+    resetOrderState
   } = usePOSStore();
   const user = useRootStore((state: RootState) => state.user);
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
@@ -101,7 +102,9 @@ const OrderPanel = () => {
       };
 
       await syncOrder(orderData);
-      clearOrder();
+      
+      // Reset all states after successful order submission
+      resetOrderState();
       showToast.success(isUpdatingOrder ? 'Order updated successfully' : 'Order created successfully');
     } catch (error) {
       console.error('Failed to sync order:', error);
