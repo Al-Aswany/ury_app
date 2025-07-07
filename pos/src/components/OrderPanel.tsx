@@ -29,7 +29,8 @@ const OrderPanel = () => {
     selectedRoom,
     selectedCustomer,
     selectedAggregator,
-    resetOrderState
+    resetOrderState,
+    paymentModes
   } = usePOSStore();
   const user = useRootStore((state: RootState) => state.user);
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
@@ -96,7 +97,7 @@ const OrderPanel = () => {
         aggregator_id: selectedAggregator || undefined,
         cashier: posProfile.cashier,
         owner: user.name,
-        mode_of_payment: 'Cash',
+        mode_of_payment: paymentModes[0],
         last_invoice: null,
         waiter: user.name
       };

@@ -7,6 +7,7 @@ import { getMenuCourses } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 import { getTableOrder, TableOrder } from '../lib/order-api';
+import { getPaymentModes } from '../lib/payment-api';
 
 // Constants
 const MAX_QUANTITY = 99;
@@ -96,7 +97,7 @@ interface POSState {
   orderLoading: boolean;
   profileLoading: boolean;
   error: string | null;
-  paymentModes: PaymentMode[];
+  paymentModes: string[];
   orders: Order[];
   selectedAggregator: string | null;
   currency: string;
@@ -120,7 +121,7 @@ interface POSState {
   setQuickFilter: (filter: 'all' | 'special') => void;
   setSelectedItem: (item: MenuItem | null) => void;
   initializeCart: () => Promise<void>;
-  processPayment: (paymentModeId: string, amount: number) => Promise<void>;
+  processPayment: (paymentMode: string, amount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
   fetchPosProfile: () => Promise<void>;
   customerGroups: string[];
@@ -174,7 +175,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   orderLoading: false,
   profileLoading: false,
   error: null,
-  paymentModes: [],
+  paymentModes: ['Cash'], // Default value
   orders: [],
   posProfile: null,
   customerGroups: [],
@@ -191,17 +192,19 @@ export const usePOSStore = create<POSState>((set, get) => ({
     try {
       set({ isInitializing: true, error: null });
       
-      // Load profile, menu, and categories in parallel
-      const [profileResult, menuResult, categoriesResult] = await Promise.allSettled([
+      // Load profile, menu, categories, and payment modes in parallel
+      const [profileResult, menuResult, categoriesResult, paymentModesResult] = await Promise.allSettled([
         get().fetchPosProfile(),
         get().fetchMenuItems(),
-        get().fetchCategories()
+        get().fetchCategories(),
+        get().fetchPaymentModes()
       ]);
 
       // Handle any errors
       if (profileResult.status === 'rejected' || 
           menuResult.status === 'rejected' || 
-          categoriesResult.status === 'rejected') {
+          categoriesResult.status === 'rejected' ||
+          paymentModesResult.status === 'rejected') {
         set({ 
           error: 'Failed to initialize app. Please refresh the page.',
           isInitializing: false 
@@ -353,7 +356,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   fetchPaymentModes: async () => {
-    // TODO: Implement payment modes fetch from API
+    try {
+      const modes = await getPaymentModes();
+      set({ 
+        paymentModes: modes,
+      });
+    } catch (error) {
+      console.error('Failed to fetch payment modes:', error);
+    }
   },
 
   initializeCart: async () => {
@@ -455,19 +465,16 @@ export const usePOSStore = create<POSState>((set, get) => ({
   setQuickFilter: (filter) => set({ quickFilter: filter }),
   setSelectedItem: (item) => set({ selectedItem: item }),
 
-  processPayment: async (paymentModeId, amount) => {
+  processPayment: async (paymentMode: string, amount: number) => {
     try {
-      const { activeOrders, cartId, selectedCustomer, selectedOrderType, paymentModes } = get();
-      const paymentMode = paymentModes.find(pm => pm.id === paymentModeId);
+      const { activeOrders, cartId, selectedCustomer, selectedOrderType } = get();
       
-      if (!paymentMode) throw new Error('Invalid payment mode');
-
       const order: Order = {
         id: uuidv4(),
         cartId: cartId!,
         customerId: selectedCustomer?.id,
-        paymentModeId,
-        paymentMode: paymentMode.name,
+        paymentModeId: paymentMode,
+        paymentMode,
         orderType: selectedOrderType,
         status: 'paid',
         totalAmount: amount,
