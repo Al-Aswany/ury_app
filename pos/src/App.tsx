@@ -5,26 +5,30 @@ import Orders from './pages/Orders';
 import Spotlight from './components/Spotlight';
 import POS from './pages/POS';
 import AuthGuard from './components/AuthGuard';
+import { ToastProvider } from './components/ui/toast';
 
 function App() {
   return (
-    <AuthGuard>
-      <Router basename="/pos">
-        <div className="flex flex-col h-screen bg-gray-100 font-inter">
-          <Header />
-          <Spotlight />
-          <div className="flex-1 overflow-hidden">
-            <Routes>
-              <Route path="/" element={<POS/>} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/analytics" element={<div className="p-6">Analytics - Coming Soon</div>} />
-              <Route path="/customers" element={<div className="p-6">Customers - Coming Soon</div>} />
-            </Routes>
+    <>
+      <ToastProvider />
+      <AuthGuard>
+        <Router basename="/pos">
+          <div className="flex flex-col h-screen bg-gray-100 font-inter">
+            <Header />
+            <Spotlight />
+            <div className="flex-1 overflow-hidden">
+              <Routes>
+                <Route path="/" element={<POS/>} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/analytics" element={<div className="p-6">Analytics - Coming Soon</div>} />
+                <Route path="/customers" element={<div className="p-6">Customers - Coming Soon</div>} />
+              </Routes>
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
-      </Router>
-    </AuthGuard>
+        </Router>
+      </AuthGuard>
+    </>
   );
 }
 

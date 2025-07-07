@@ -10,6 +10,7 @@ import { Spinner } from './ui/spinner';
 import { syncOrder } from '../lib/order-api';
 import { useRootStore } from '../store/root-store';
 import type { RootState } from '../store/root-store';
+import { showToast } from './ui/toast';
 
 const OrderPanel = () => {
   const { 
@@ -86,9 +87,10 @@ const OrderPanel = () => {
 
       await syncOrder(orderData);
       clearOrder();
+      showToast.success(isUpdatingOrder ? 'Order updated successfully' : 'Order created successfully');
     } catch (error) {
       console.error('Failed to sync order:', error);
-      // TODO: Show error toast to user
+      showToast.error(error instanceof Error ? error.message : 'Failed to process order');
     }
   };
 
@@ -174,7 +176,14 @@ const OrderPanel = () => {
                     </Button>
                     <div className="flex items-center space-x-2">
                       <Button
-                        onClick={() => updateQuantity(item.uniqueId!, Math.max(0, item.quantity - 1))}
+                        onClick={() => {
+                          const newQuantity = Math.max(0, item.quantity - 1);
+                          if (newQuantity === 0) {
+                            removeFromOrder(item.uniqueId!);
+                          } else {
+                            updateQuantity(item.uniqueId!, newQuantity);
+                          }
+                        }}
                         variant="outline"
                         size="icon"
                         className="w-8 h-8 rounded-full"
