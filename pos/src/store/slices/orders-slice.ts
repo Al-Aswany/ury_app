@@ -44,7 +44,7 @@ export interface OrdersActions {
 
 export type OrdersSlice = OrdersState & OrdersActions;
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 export const createOrdersSlice: StateCreator<
   OrdersSlice,

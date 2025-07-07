@@ -69,35 +69,40 @@ export default function Orders() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-screen-xl mx-auto">
               {orders.map((order) => (
-                <Card key={order.name} className="bg-white hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                <Card key={order.name} className="p-0 bg-white hover:shadow-md transition-shadow flex flex-col overflow-hidden">
+                  <CardContent className="p-0 flex flex-col h-full">
+                    <div className="p-3 bg-gray-50 border-b">
+                    <h3 className="font-medium text-gray-900 text-sm truncate" title={order.name}>
+                      {order.name}
+                    </h3>
+                    <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-lg truncate" title={order.name}>
-                          {order.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {order.restaurant_table ? `${order.restaurant_table} • ` : ''}
-                          {order.order_type}
+                        <p className="text-xs text-gray-500">
+                          {order.restaurant_table ? `Table ${order.restaurant_table} • ` : ''}{order.order_type}
                         </p>
                       </div>
-                      <Badge variant={order.status === 'Draft' ? 'secondary' : 'default'}>
+                      <Badge variant={order.status === 'Draft' ? 'secondary' : 'default'} className="ml-2">
                         {order.status}
                       </Badge>
                     </div>
-                    <div className="mt-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
+                    </div>
+
+                    {/* Content section - matches MenuCard padding and structure */}
+                    <div className="flex-1 p-3 flex flex-col">
+                      <div className="">
+                        <p className="text-sm text-gray-900">{order.customer}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Clock className="w-3.5 h-3.5" />
                         <span>{formatDateTime(order.posting_date, order.posting_time)}</span>
                       </div>
-                      <div className="mt-2 text-sm text-gray-600">
-                        {order.customer} • {order.mobile_number}
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">Total</span>
-                        <span className="text-lg font-semibold">{formatCurrency(order.grand_total)}</span>
+
+                      {/* Total - pushed to bottom like MenuCard */}
+                      <div className="mt-auto pt-2">
+                        <span className="text-sm font-semibold text-gray-900 tabular-nums">
+                          {formatCurrency(order.grand_total)}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
