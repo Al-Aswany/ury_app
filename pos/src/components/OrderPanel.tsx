@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Trash2, Edit, FrownIcon, Plus, Loader2 } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { formatCurrency, cn } from '../lib/utils';
-import CustomerSelect from './CustomerSelect';
+import { CustomerSelect } from './CustomerSelect';
 import ProductDialog from './ProductDialog';
 import OrderTypeSelect from './OrderTypeSelect';
 import { Button } from './ui/button';
@@ -67,8 +67,13 @@ const OrderPanel = () => {
         throw new Error('User not logged in');
       }
 
-      // Validate customer details
-      if (!selectedCustomer?.name) {
+      // Validate customer/aggregator details
+      if (selectedOrderType === 'Aggregators') {
+        if (!selectedAggregator?.customer) {
+          showToast.error('Please select an aggregator before proceeding');
+          return;
+        }
+      } else if (!selectedCustomer?.name) {
         showToast.error('Please select a customer before proceeding');
         return;
       }
@@ -93,8 +98,8 @@ const OrderPanel = () => {
         order_type: selectedOrderType,
         table: selectedTable || undefined,
         room: selectedRoom || undefined,
-        customer: selectedCustomer.name,
-        aggregator_id: selectedAggregator || undefined,
+        customer: selectedOrderType === 'Aggregators' ? selectedAggregator?.customer : selectedCustomer?.name,
+        aggregator_id: selectedOrderType === 'Aggregators' ? selectedAggregator?.customer : undefined,
         cashier: posProfile.cashier,
         owner: user.name,
         mode_of_payment: paymentModes[0],

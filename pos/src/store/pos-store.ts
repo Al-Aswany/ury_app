@@ -79,6 +79,10 @@ interface CartTotals {
   itemCount: number;
 }
 
+interface Aggregator {
+  customer: string;
+}
+
 interface POSState {
   menuItems: MenuItem[];
   categories: string[];
@@ -99,7 +103,7 @@ interface POSState {
   error: string | null;
   paymentModes: string[];
   orders: Order[];
-  selectedAggregator: string | null;
+  selectedAggregator: Aggregator | null;
   currency: string;
   currencySymbol: string | null;
   isUpdatingOrder: boolean; // Flag to track if we're updating an existing order
@@ -143,6 +147,11 @@ interface POSState {
   initializeApp: () => Promise<void>;
   setOrderForUpdate: (orderId: string | null) => void; // Function to set order update mode
   resetOrderState: () => void;
+  setSelectedAggregator: (aggregator: Aggregator | null) => void;
+}
+
+interface POSStore extends POSState {
+  setSelectedAggregator: (aggregator: Aggregator | null) => void;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -157,7 +166,7 @@ const calculateItemPrice = (item: OrderItem): number => {
   return basePrice + addonsTotal;
 };
 
-export const usePOSStore = create<POSState>((set, get) => ({
+export const usePOSStore = create<POSStore>((set, get) => ({
   menuItems: [],
   categories: [],
   activeOrders: [],
@@ -327,7 +336,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         category: item.course
       }));
 
-      set({ menuItems, selectedAggregator: aggregator }); // Use menuLoading instead of loading
+      set({ menuItems, selectedAggregator: { customer: aggregator } }); // Use menuLoading instead of loading
     } catch (error) {
       set({ error: 'Failed to load aggregator menu' }); // Use menuLoading instead of loading
       console.error('Error loading aggregator menu:', error);
@@ -464,6 +473,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   setSelectedOrderType: (type) => set({ selectedOrderType: type }),
   setQuickFilter: (filter) => set({ quickFilter: filter }),
   setSelectedItem: (item) => set({ selectedItem: item }),
+  setSelectedAggregator: (aggregator) => set({ selectedAggregator: aggregator }),
 
   processPayment: async (paymentMode: string, amount: number) => {
     try {

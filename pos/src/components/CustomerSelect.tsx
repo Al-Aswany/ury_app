@@ -6,8 +6,7 @@ import { Select, SelectItem } from './ui';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
 import { addCustomer, type CreateCustomerData, searchCustomers } from '../lib/customer-api';
-import { cn } from '../lib/utils';
-import { X } from 'lucide-react';
+import { AggregatorSelect } from './AggregatorSelect';
 
 // NewCustomerForm component
 function NewCustomerForm({ 
@@ -212,7 +211,8 @@ interface CustomerSelectProps {
   disabled?: boolean;
 }
 
-const CustomerSelect = ({ disabled }: CustomerSelectProps) => {
+export function CustomerSelect({ disabled }: CustomerSelectProps) {
+  const { selectedCustomer, setSelectedCustomer, selectedOrderType } = usePOSStore();
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -222,7 +222,6 @@ const CustomerSelect = ({ disabled }: CustomerSelectProps) => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { selectedCustomer, setSelectedCustomer } = usePOSStore();
   const [prefillName, setPrefillName] = useState('');
   const [prefillPhone, setPrefillPhone] = useState('');
 
@@ -284,6 +283,10 @@ const CustomerSelect = ({ disabled }: CustomerSelectProps) => {
       setIsOpen(false);
     }
   };
+
+  if (selectedOrderType === 'Aggregators') {
+    return <AggregatorSelect />;
+  }
 
   return (
     <div className="relative">
@@ -414,6 +417,4 @@ const CustomerSelect = ({ disabled }: CustomerSelectProps) => {
       )}
     </div>
   );
-};
-
-export default CustomerSelect; 
+} 
