@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { X, Plus, Minus } from 'lucide-react';
 import { MenuItem, OrderItem, usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Input } from './ui';
+import { Textarea } from './ui/textarea';
 
 interface Variant {
   id: string;
@@ -34,19 +35,43 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   initialQuantity,
   itemToReplace
 }) => {
-  const { selectedItem, addToOrder, removeFromOrder, setSelectedItem, getItemQuantityFromCart } = usePOSStore();
+  const { 
+    selectedItem, 
+    addToOrder, 
+    removeFromOrder, 
+    setSelectedItem, 
+    getItemQuantityFromCart,
+    activeOrders 
+  } = usePOSStore();
+  
+  // Find existing item in cart
+  const existingCartItem = selectedItem ? activeOrders.find(
+    order => order.id === selectedItem.id &&
+    (!order.selectedVariant || order.selectedVariant.id === initialVariant?.id) &&
+    (!order.selectedAddons || order.selectedAddons.length === initialAddons.length && 
+      order.selectedAddons.every(addon => 
+        initialAddons.some(initAddon => initAddon.id === addon.id)
+      ))
+  ) : null;
+
   const [selectedVariant, setSelectedVariant] = useState<Variant | undefined>(initialVariant || selectedItem?.variants?.[0]);
   const [selectedAddons, setSelectedAddons] = useState<Array<Omit<Addon, 'category'>>>(initialAddons);
   const [quantity, setQuantity] = useState<string>(editMode ? initialQuantity?.toString() || '0' : '0');
+  const [comments, setComments] = useState<string>(itemToReplace?.comments || existingCartItem?.comments || '');
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Initialize quantity from cart if not in edit mode
+  // Initialize quantity and comments from cart if not in edit mode
   useEffect(() => {
     if (!editMode && selectedItem) {
-      const cartQuantity = getItemQuantityFromCart(selectedItem);
-      setQuantity(cartQuantity.toString());
+      if (existingCartItem) {
+        setQuantity(existingCartItem.quantity.toString());
+        setComments(existingCartItem.comments || '');
+      } else {
+        const cartQuantity = getItemQuantityFromCart(selectedItem);
+        setQuantity(cartQuantity.toString());
+      }
     }
-  }, [selectedItem, editMode, getItemQuantityFromCart]);
+  }, [selectedItem, editMode, getItemQuantityFromCart, existingCartItem]);
 
   // Handle click outside to close dialog
   useEffect(() => {
@@ -118,6 +143,8 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
     if (editMode && itemToReplace?.uniqueId) {
       removeFromOrder(itemToReplace.uniqueId);
+    } else if (existingCartItem?.uniqueId) {
+      removeFromOrder(existingCartItem.uniqueId);
     }
 
     const orderItem: OrderItem = {
@@ -125,7 +152,8 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
       quantity: numericQuantity,
       selectedVariant,
       selectedAddons,
-      price: basePrice
+      price: basePrice,
+      comments: comments.trim()
     };
     addToOrder(orderItem);
     handleClose();
@@ -255,6 +283,17 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               </Button>
             </div>
           </div>
+
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-3">Special Instructions</h3>
+            <Textarea
+              placeholder="Add any special instructions or notes for this item..."
+              value={comments}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setComments(e.target.value)}
+              className="resize-none"
+              rows={3}
+            />
+          </div>
         </div>
 
         {/* Right Column - Add-ons and Order Button */}
@@ -306,7 +345,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               size="lg"
               disabled={numericQuantity === 0}
             >
-              {editMode ? 'Update Order' : 'Add to Order'}
+              {editMode || existingCartItem ? 'Update Order' : 'Add to Order'}
             </Button>
           </div>
         </div>

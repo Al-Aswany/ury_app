@@ -48,6 +48,7 @@ export interface OrderItem extends MenuItem {
   selectedVariant?: { id: string; name: string; price: number };
   selectedAddons?: { id: string; name: string; price: number }[];
   uniqueId?: string;
+  comments?: string;
 }
 
 export interface PaymentMode {
