@@ -14,7 +14,6 @@ const OrderStatusSidebar = ({
   disabled,
   selectedStatus,
   setSelectedStatus,
-  getStatusCount = () => 0
 }: OrderStatusSidebarProps) => {
   return (
     <div className={cn(
@@ -51,13 +50,6 @@ const OrderStatusSidebar = ({
                   <FileText className="w-4 h-4 text-gray-500" />
                   <span>{status.label}</span>
                 </div>
-                <Badge 
-                  variant="secondary" 
-                  size="sm" 
-                  className="text-xs text-gray-500 bg-gray-100 min-w-[24px] text-center"
-                >
-                  {getStatusCount(status.value as OrderStatusType)}
-                </Badge>
               </Button>
             ))}
           </div>

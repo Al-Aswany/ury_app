@@ -52,7 +52,6 @@ export default function Orders() {
       <OrderStatusSidebar
         selectedStatus={selectedStatus}
         setSelectedStatus={setSelectedStatus}
-        getStatusCount={() => orders.length}
       />
 
       {/* Middle Section - Order Cards */}
