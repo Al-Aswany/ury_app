@@ -5,24 +5,28 @@ import {
   Command,
   User,
   ChevronDown,
-  LogOut,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
   Package,
   AlertCircle,
   DollarSign,
   ChefHat,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
   Monitor,
-  BarChart3
+  LogOut,
 } from 'lucide-react';
 import { Button, Input, Badge } from './ui';
+import { useRootStore } from '../store/root-store';
+import type { RootState } from '../store/root-store';
+import { logout } from '../lib/auth-api';
+import { showToast } from './ui/toast';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const user = useRootStore((state: RootState) => state.user);
 
   // Enhanced notification data with restaurant-specific alerts
   const notifications = [
@@ -136,6 +140,15 @@ const Header = () => {
   const handleUserMenuToggle = () => {
     setShowNotifications(false);
     setShowUserMenu(!showUserMenu);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = '/login?redirect-to=%2Fpos';
+    } catch (error) {
+      showToast.error('Failed to logout. Please try again.');
+    }
   };
 
   const getNotificationColor = (type: string, priority: string) => {
@@ -266,7 +279,7 @@ const Header = () => {
               <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-medium">Admin</span>
+              <span className="text-sm font-medium">{user?.full_name || 'User'}</span>
               <ChevronDown className="w-4 h-4" />
             </Button>
 
@@ -274,30 +287,25 @@ const Header = () => {
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                 <div className="p-4 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">Admin User</p>
-                  <p className="text-sm text-gray-500">admin@urypos.com</p>
+                  <p className="text-sm font-medium text-gray-900">{user?.full_name || 'User'}</p>
+                  <p className="text-sm text-gray-500">{user?.name || ''}</p>
                 </div>
                 <div className="py-2">
-                  <Link
-                    to="/pos/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <Monitor className="w-4 h-4 mr-3" />
-                    Settings
-                  </Link>
-                  <Link
-                    to="/pos/analytics"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <BarChart3 className="w-4 h-4 mr-3" />
-                    Analytics
-                  </Link>
                   <Button
                     variant="ghost"
-                    className="flex items-center w-full justify-start text-sm text-gray-700"
+                    className="flex justify-start items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    onClick={() => window.location.href = '/app'}
+                  >
+                    <Monitor className="w-4 h-4 mr-3" />
+                    Switch To Desk
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex justify-start items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    onClick={handleLogout}
                   >
                     <LogOut className="w-4 h-4 mr-3" />
-                    Sign out
+                    Logout
                   </Button>
                 </div>
               </div>

@@ -35,18 +35,18 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       set({ isLoading: true, error: null });
       const response = await getLoggedUser();
       
-      if (!response.message) {
+      if (!response) {
         // If no user is logged in, redirect to login
         window.location.href = '/login?redirect-to=%2Fpos';
         return;
       }
 
       // Get user roles
-      const roles = await getUserRoles(response.message);
+      const roles = await getUserRoles(response);
 
       set({
         user: {
-          name: response.message, // Store the user ID in name field
+          name: response, // Store the user ID in name field
           full_name: roles.full_name,
           roles: roles.roles,
         },

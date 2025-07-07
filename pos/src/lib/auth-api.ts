@@ -1,8 +1,6 @@
-import { call, db } from './frappe-sdk';
+import { call, db, auth } from './frappe-sdk';
 
-interface LoggedUserResponse {
-  message: string | null;
-}
+type LoggedUserResponse = string | null;
 
 interface UserDoc {
   name: string;
@@ -16,11 +14,11 @@ interface UserDoc {
 
 export const getLoggedUser = async (): Promise<LoggedUserResponse> => {
   try {
-    const response = await call.get('frappe.auth.get_logged_user');
+    const response = await auth.getLoggedInUser();
     return response as LoggedUserResponse;
   } catch (error) {
     console.error('Error getting logged user:', error);
-    return { message: null };
+    return null;
   }
 };
 
@@ -43,3 +41,12 @@ export const getUserRoles = async (email: string): Promise<{ roles: string[]; fu
     return { roles: [], full_name: '' };
   }
 };
+
+export const logout = async () => {
+  try {
+    return auth.logout();
+  }catch(e){
+    console.error('Error logging out:', e);
+    return false;
+  }
+}
