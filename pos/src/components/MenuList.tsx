@@ -18,7 +18,8 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
     quickFilter,
     fetchMenuItems,
     setSearchQuery,
-    isMenuInteractionDisabled
+    isMenuInteractionDisabled,
+    isOrderInteractionDisabled
   } = usePOSStore();
 
   useEffect(() => {
@@ -38,6 +39,8 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
       return matchesCategory && matchesSearch && matchesFilter;
     });
   }, [menuItems, selectedCategory, searchQuery, quickFilter]);
+
+  const isInteractionDisabled = isMenuInteractionDisabled() || isOrderInteractionDisabled();
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
@@ -63,7 +66,7 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
         ) : (
           <div className={cn(
             "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3",
-            isMenuInteractionDisabled() && "opacity-50 pointer-events-none"
+            isInteractionDisabled && "opacity-50 pointer-events-none"
           )}>
             {filteredItems.map((item) => (
               <MenuCard
@@ -75,7 +78,7 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
                 course={item.course}
                 item={item.item}
                 onClick={() => onItemClick(item)}
-                disabled={isMenuInteractionDisabled()}
+                disabled={isInteractionDisabled}
               />
             ))}
           </div>

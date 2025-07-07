@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Edit, FrownIcon, Plus } from 'lucide-react';
+import { Trash2, Edit, FrownIcon, Plus, Loader2 } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { formatCurrency, cn } from '../lib/utils';
 import CustomerSelect from './CustomerSelect';
@@ -31,6 +31,7 @@ const OrderPanel = () => {
   } = usePOSStore();
   const user = useRootStore((state: RootState) => state.user);
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const calculateItemTotal = (item: typeof activeOrders[0]) => {
     const basePrice = item.selectedVariant?.price || item.price;
@@ -55,6 +56,8 @@ const OrderPanel = () => {
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
+
       if (!posProfile) {
         throw new Error('POS Profile not found');
       }
@@ -70,19 +73,18 @@ const OrderPanel = () => {
           rate: item.selectedVariant?.price || item.price,
           qty: item.quantity
         })),
-        no_of_pax: 1, // Default value
+        no_of_pax: 1,
         pos_profile: posProfile.name,
         order_type: selectedOrderType,
         table: selectedTable || undefined,
         room: selectedRoom || undefined,
         customer: selectedCustomer?.name || undefined,
         aggregator_id: selectedAggregator || undefined,
-        // Add required fields from POS profile
-        cashier: posProfile.cashier, // Keep cashier from POS profile
-        owner: user.name, // Use current user's name (user ID) as owner
-        mode_of_payment: 'Cash', // Default to Cash since payments array is not available in POS profile
-        last_invoice: null, // For new orders, this is null
-        waiter: user.name // Use current user's name (user ID) as waiter
+        cashier: posProfile.cashier,
+        owner: user.name,
+        mode_of_payment: 'Cash',
+        last_invoice: null,
+        waiter: user.name
       };
 
       await syncOrder(orderData);
@@ -91,6 +93,8 @@ const OrderPanel = () => {
     } catch (error) {
       console.error('Failed to sync order:', error);
       showToast.error(error instanceof Error ? error.message : 'Failed to process order');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -125,11 +129,13 @@ const OrderPanel = () => {
     </div>
   );
 
+  const isInteractionDisabled = isOrderInteractionDisabled() || isSubmitting;
+
   return (
     <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-10">
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <OrderTypeSelect disabled={isOrderInteractionDisabled()} />
-        <div className="mt-3"><CustomerSelect disabled={isOrderInteractionDisabled()} /></div>
+        <OrderTypeSelect disabled={isInteractionDisabled} />
+        <div className="mt-3"><CustomerSelect disabled={isInteractionDisabled} /></div>
       </div>
       
       {orderLoading ? (
@@ -144,7 +150,7 @@ const OrderPanel = () => {
                 key={item.uniqueId}
                 className={cn(
                   "flex flex-col py-4 border-b border-gray-100",
-                  isOrderInteractionDisabled() && "opacity-50"
+                  isInteractionDisabled && "opacity-50"
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -170,7 +176,7 @@ const OrderPanel = () => {
                       size="icon"
                       className="text-blue-600 hover:text-blue-700"
                       title="Edit item"
-                      disabled={isOrderInteractionDisabled()}
+                      disabled={isInteractionDisabled}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -187,7 +193,7 @@ const OrderPanel = () => {
                         variant="outline"
                         size="icon"
                         className="w-8 h-8 rounded-full"
-                        disabled={isOrderInteractionDisabled()}
+                        disabled={isInteractionDisabled}
                       >
                         -
                       </Button>
@@ -197,7 +203,7 @@ const OrderPanel = () => {
                         variant="outline"
                         size="icon"
                         className="w-8 h-8 rounded-full"
-                        disabled={isOrderInteractionDisabled()}
+                        disabled={isInteractionDisabled}
                       >
                         +
                       </Button>
@@ -208,7 +214,7 @@ const OrderPanel = () => {
                       variant="ghost"
                       size="icon"
                       className="text-red-500 hover:text-red-600"
-                      disabled={isOrderInteractionDisabled()}
+                      disabled={isInteractionDisabled}
                     >
                       <Trash2 className="w-5 h-5" />
                     </Button>
@@ -222,7 +228,7 @@ const OrderPanel = () => {
                 variant="ghost"
                 size="sm"
                 className="w-full text-gray-600 hover:text-gray-800 mt-4"
-                disabled={isOrderInteractionDisabled()}
+                disabled={isInteractionDisabled}
               >
                 Clear cart
               </Button>
@@ -239,10 +245,13 @@ const OrderPanel = () => {
               variant="default"
               size="default"
               className="w-full"
-              disabled={isOrderInteractionDisabled()}
+              disabled={isInteractionDisabled}
             >
-              {orderLoading ? (
-                <Spinner />
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isUpdatingOrder ? 'Updating Order...' : 'Processing Order...'}
+                </div>
               ) : isUpdatingOrder ? (
                 'Update Order'
               ) : (

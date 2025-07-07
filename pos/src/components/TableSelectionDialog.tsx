@@ -35,6 +35,10 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
   const [loadingTables, setLoadingTables] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const sortTables = (tables: Table[]): Table[] => {
+    return [...tables].sort((a, b) => a.name.localeCompare(b.name));
+  };
+
   // Fetch rooms on mount with session storage
   useEffect(() => {
     async function fetchRooms() {
@@ -79,14 +83,15 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
       setError(null);
       // If already cached, use cache
       if (tablesCache[selectedRoom]) {
-        setTables(tablesCache[selectedRoom]);
+        setTables(sortTables(tablesCache[selectedRoom]));
         setLoadingTables(false);
         return;
       }
       setLoadingTables(true);
       try {
         const fetchedTables = await getTables(selectedRoom);
-        setTables(fetchedTables);
+        const sortedTables = sortTables(fetchedTables);
+        setTables(sortedTables);
         setTablesCache(prev => ({ ...prev, [selectedRoom]: fetchedTables }));
       } catch (e) {
         setError('Failed to load tables');
@@ -96,7 +101,6 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
       }
     }
     fetchTables();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoom]);
 
   // Clear cache when modal closes

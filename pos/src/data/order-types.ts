@@ -1,6 +1,6 @@
 import { Globe, Phone, ShoppingBag, Truck, Utensils } from "lucide-react";
 
-export type OrderType = "Dine In" | "Takeaway" | "Delivery" | "Phone In" | "Aggregators";
+export type OrderType = "Dine In" | "Take Away" | "Delivery" | "Phone In" | "Aggregators";
 
 export type OrderTypes= {
     label: string;
@@ -15,8 +15,8 @@ export const ORDER_TYPES: OrderTypes[] = [
         icon: Utensils
     },
     {
-        label: "Takeaway",
-        value: "Takeaway",
+        label: "Take Away",
+        value: "Take Away",
         icon: ShoppingBag
     },
     {
@@ -37,4 +37,4 @@ export const ORDER_TYPES: OrderTypes[] = [
 ]
 
 export const DINE_IN="Dine In"
-export const DEFAULT_ORDER_TYPE="Takeaway"
+export const DEFAULT_ORDER_TYPE="Take Away"
