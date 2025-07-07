@@ -38,3 +38,16 @@ export const ORDER_TYPES: OrderTypes[] = [
 
 export const DINE_IN="Dine In"
 export const DEFAULT_ORDER_TYPE="Take Away"
+
+export type OrderStatusType = "Draft" | "Paid" | "Cancelled";
+
+export const ORDER_STATUS_TYPES = [
+    {
+        label: "Draft",
+        value: "Draft"
+    },
+    {
+        label: "Unbilled",
+        value: "Unbilled"
+    }
+]

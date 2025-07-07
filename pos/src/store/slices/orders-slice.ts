@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { OrderType } from '../../data/order-types';
 import { Customer, OrderItem } from '../pos-store';
 import { call } from '../../lib/frappe-sdk';
+import { getPOSInvoices } from '../../lib/invoice-api';
 
 export interface POSInvoice {
   name: string;
@@ -21,32 +22,29 @@ export interface POSInvoice {
   order_type: OrderType;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  limit_start: number;
-  limit: number;
-}
-
 export interface OrdersState {
   orders: POSInvoice[];
   orderLoading: boolean;
   error: string | null;
   pagination: {
     currentPage: number;
-    totalItems: number;
+    hasNextPage: boolean;
     itemsPerPage: number;
   };
+  selectedStatus: 'Draft' | 'Paid' | 'Cancelled';
 }
 
 export interface OrdersActions {
-  fetchOrders: (status?: string, page?: number) => Promise<void>;
+  fetchOrders: (page?: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: POSInvoice['status']) => Promise<void>;
+  goToNextPage: () => Promise<void>;
+  goToPreviousPage: () => Promise<void>;
+  setSelectedStatus: (status: POSInvoice['status']) => Promise<void>;
 }
 
 export type OrdersSlice = OrdersState & OrdersActions;
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 5;
 
 export const createOrdersSlice: StateCreator<
   OrdersSlice,
@@ -60,37 +58,31 @@ export const createOrdersSlice: StateCreator<
   error: null,
   pagination: {
     currentPage: 1,
-    totalItems: 0,
+    hasNextPage: false,
     itemsPerPage: ITEMS_PER_PAGE,
   },
+  selectedStatus: 'Draft',
 
   // Actions
-  fetchOrders: async (status = 'Draft', page = 1) => {
+  fetchOrders: async (page = 1) => {
     try {
       set({ orderLoading: true, error: null });
       
       const limitStart = (page - 1) * ITEMS_PER_PAGE;
+      const status = get().selectedStatus;
       
-      const response = await call.get<{ message: PaginatedResponse<POSInvoice> }>(
-        'ury.ury_pos.api.getPosInvoice',
-        {
-          status,
-          limit: ITEMS_PER_PAGE,
-          limit_start: limitStart,
-        }
-      );
+      const { invoices, hasMore } = await getPOSInvoices({
+        status,
+        limit: ITEMS_PER_PAGE,
+        limit_start: limitStart,
+      });
 
-      if (!response?.message) {
-        throw new Error('Invalid response from server');
-      }
-
-      const { data, total } = response.message;
-      
+      console.log("HAS MORE ", hasMore)
       set({ 
-        orders: data,
+        orders: invoices,
         pagination: {
           currentPage: page,
-          totalItems: total,
+          hasNextPage: hasMore,
           itemsPerPage: ITEMS_PER_PAGE,
         },
         orderLoading: false 
@@ -103,6 +95,25 @@ export const createOrdersSlice: StateCreator<
     }
   },
 
+  goToNextPage: async () => {
+    const { pagination, orderLoading } = get();
+    if (!orderLoading && pagination.hasNextPage) {
+      await get().fetchOrders(pagination.currentPage + 1);
+    }
+  },
+
+  goToPreviousPage: async () => {
+    const { pagination, orderLoading } = get();
+    if (!orderLoading && pagination.currentPage > 1) {
+      await get().fetchOrders(pagination.currentPage - 1);
+    }
+  },
+
+  setSelectedStatus: async (status) => {
+    set({ selectedStatus: status });
+    await get().fetchOrders(1); // Reset to first page when status changes
+  },
+
   updateOrderStatus: async (orderId: string, status: POSInvoice['status']) => {
     try {
       set({ orderLoading: true, error: null });
@@ -113,7 +124,7 @@ export const createOrdersSlice: StateCreator<
       });
 
       // Refresh the orders list after status update
-      await get().fetchOrders(status, get().pagination.currentPage);
+      await get().fetchOrders(get().pagination.currentPage);
       
       set({ orderLoading: false });
     } catch (error) {
