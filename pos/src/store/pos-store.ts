@@ -176,7 +176,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   searchQuery: '',
   selectedCustomer: null,
   selectedOrderType: DEFAULT_ORDER_TYPE as OrderType,
-  quickFilter: 'all',
+  quickFilter: "all",
   selectedItem: null,
   cartId: null,
   loading: false,
@@ -469,13 +469,13 @@ export const usePOSStore = create<POSStore>((set, get) => ({
     }
   },
   setSelectedOrderType: (type) => {
-    const { resetOrderState, fetchMenuItems } = get();
+    const { fetchMenuItems } = get();
     
-    // Reset all states first
-    resetOrderState();
-    
-    // Set the new order type
-    set({ selectedOrderType: type });
+    // Only clear active orders and update order type
+    set({ 
+      activeOrders: [],
+      selectedOrderType: type 
+    });
     
     // Fetch menu items for the new order type
     if (type !== 'Aggregators') {
@@ -673,6 +673,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   },
 
   resetOrderState: () => {
+    const { fetchMenuItems } = get();
+    
     set({
       selectedCustomer: null,
       selectedTable: null,
@@ -684,8 +686,12 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       selectedItem: null,
       orderLoading: false,
       menuItems: [], // Clear menu items when resetting
-      error: null
+      error: null,
+      selectedOrderType: DEFAULT_ORDER_TYPE
     });
+
+    // Fetch menu items for the default order type
+    fetchMenuItems();
   },
 
   // Helper functions to check if UI should be disabled
