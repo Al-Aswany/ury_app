@@ -64,6 +64,24 @@ export interface PosProfileFull {
   role_allowed_for_billing: RolePermission[];
 }
 
+// Combined POS Profile with both limited and full fields
+export interface PosProfileCombined extends PosProfileFull {
+  // Add limited fields that don't exist in full profile
+  waiter: string;
+  cashier: string;
+  print_format: string | null;
+  qz_print: number;
+  qz_host: string | null;
+  printer: string | null;
+  print_type: string;
+  tableAttention: number;
+  paid_limit: number;
+  disable_rounded_total: number;
+  enable_discount: number;
+  multiple_cashier: number;
+  edit_order_type?: number;
+}
+
 export interface Currency {
   name: string;
   symbol: string;
@@ -85,7 +103,36 @@ export async function getPosProfileLimitedFields(): Promise<PosProfileLimited> {
 export async function getPosProfileFull(posProfileName: string): Promise<PosProfileFull> {
   const doc = await db.getDoc(DOCTYPES.POS_PROFILE, posProfileName);
   return doc;
-} 
+}
+
+export async function getCombinedPosProfile(): Promise<PosProfileCombined> {
+  // Get limited fields first
+  const limitedProfile = await getPosProfileLimitedFields();
+  console.log('limitedProfile', limitedProfile);
+  
+  // Get full profile using the pos_profile name from limited profile
+  const fullProfile = await getPosProfileFull(limitedProfile.pos_profile);
+  
+  // Merge both profiles
+  const combinedProfile: PosProfileCombined = {
+    ...fullProfile,
+    waiter: limitedProfile.waiter,
+    cashier: limitedProfile.cashier,
+    print_format: limitedProfile.print_format,
+    qz_print: limitedProfile.qz_print,
+    qz_host: limitedProfile.qz_host,
+    printer: limitedProfile.printer,
+    print_type: limitedProfile.print_type,
+    tableAttention: limitedProfile.tableAttention,
+    paid_limit: limitedProfile.paid_limit,
+    disable_rounded_total: limitedProfile.disable_rounded_total,
+    enable_discount: limitedProfile.enable_discount,
+    multiple_cashier: limitedProfile.multiple_cashier,
+    edit_order_type: limitedProfile.edit_order_type
+  };
+
+  return combinedProfile;
+}
 
 export async function getCurrencyInfo(currencyCode: string): Promise<Currency> {
   const doc = await db.getDoc(DOCTYPES.CURRENCY, currencyCode);

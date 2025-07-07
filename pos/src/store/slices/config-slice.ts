@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 import { AuthSlice } from './auth-slice';
-import { getPosProfileFull, PosProfileFull } from '../../lib/pos-profile-api';
+import { getCombinedPosProfile, PosProfileCombined } from '../../lib/pos-profile-api';
 
 interface RolePermission {
   name: string;
@@ -22,7 +22,7 @@ export interface ConfigState {
   isLoading: boolean;
   error: string | null;
   hasAccess: boolean;
-  posProfile: PosProfileFull | null;
+  posProfile: PosProfileCombined | null;
 }
 
 export interface ConfigActions {
@@ -67,7 +67,7 @@ export const createConfigSlice: StateCreator<
       }
 
       // If not in cache or forcing refresh, fetch from API
-      const profile = await getPosProfileFull('URY Pos Profile'); // Replace with actual profile name
+      const profile = await getCombinedPosProfile();
       
       // Cache the profile
       sessionStorage.setItem('posProfile', JSON.stringify(profile));

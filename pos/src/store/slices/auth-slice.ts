@@ -2,7 +2,7 @@ import { StateCreator } from 'zustand';
 import { getLoggedUser, getUserRoles } from '../../lib/auth-api';
 
 export interface User {
-  email: string;
+  name: string; // This stores the user ID
   roles: string[];
   full_name?: string;
 }
@@ -46,7 +46,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
 
       set({
         user: {
-          email: response.message,
+          name: response.message, // Store the user ID in name field
           full_name: roles.full_name,
           roles: roles.roles,
         },

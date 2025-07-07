@@ -7,6 +7,9 @@ import ProductDialog from './ProductDialog';
 import OrderTypeSelect from './OrderTypeSelect';
 import { Button } from './ui/button';
 import { Spinner } from './ui/spinner';
+import { syncOrder } from '../lib/order-api';
+import { useRootStore } from '../store/root-store';
+import type { RootState } from '../store/root-store';
 
 const OrderPanel = () => {
   const { 
@@ -17,8 +20,15 @@ const OrderPanel = () => {
     setSelectedItem,
     orderLoading,
     isOrderInteractionDisabled,
-    isUpdatingOrder
+    isUpdatingOrder,
+    posProfile,
+    selectedOrderType,
+    selectedTable,
+    selectedRoom,
+    selectedCustomer,
+    selectedAggregator
   } = usePOSStore();
+  const user = useRootStore((state: RootState) => state.user);
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
 
   const calculateItemTotal = (item: typeof activeOrders[0]) => {
@@ -40,6 +50,46 @@ const OrderPanel = () => {
     };
     setSelectedItem(menuItem);
     setEditingItem(item);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (!posProfile) {
+        throw new Error('POS Profile not found');
+      }
+
+      if (!user?.name) {
+        throw new Error('User not logged in');
+      }
+
+      const orderData = {
+        items: activeOrders.map(item => ({
+          item: item.id,
+          item_name: item.name,
+          rate: item.selectedVariant?.price || item.price,
+          qty: item.quantity
+        })),
+        no_of_pax: 1, // Default value
+        pos_profile: posProfile.name,
+        order_type: selectedOrderType,
+        table: selectedTable || undefined,
+        room: selectedRoom || undefined,
+        customer: selectedCustomer?.name || undefined,
+        aggregator_id: selectedAggregator || undefined,
+        // Add required fields from POS profile
+        cashier: posProfile.cashier, // Keep cashier from POS profile
+        owner: user.name, // Use current user's name (user ID) as owner
+        mode_of_payment: 'Cash', // Default to Cash since payments array is not available in POS profile
+        last_invoice: null, // For new orders, this is null
+        waiter: user.name // Use current user's name (user ID) as waiter
+      };
+
+      await syncOrder(orderData);
+      clearOrder();
+    } catch (error) {
+      console.error('Failed to sync order:', error);
+      // TODO: Show error toast to user
+    }
   };
 
   const EmptyCartUI = () => (
@@ -176,15 +226,19 @@ const OrderPanel = () => {
               <span className="text-lg font-semibold">{formatCurrency(total)}</span>
             </div>
             <Button
-              onClick={() => {
-                // TODO: Implement order creation/update logic
-              }}
+              onClick={handleSubmit}
               variant="default"
               size="default"
               className="w-full"
               disabled={isOrderInteractionDisabled()}
             >
-              {isUpdatingOrder ? 'Update Order' : 'Add New Order'}
+              {orderLoading ? (
+                <Spinner />
+              ) : isUpdatingOrder ? (
+                'Update Order'
+              ) : (
+                'Add New Order'
+              )}
             </Button>
           </div>
         </>

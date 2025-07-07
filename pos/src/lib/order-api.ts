@@ -1,3 +1,5 @@
+import { call } from './frappe-sdk';
+
 export interface POSInvoiceItem {
   name: string;
   item_code: string;
@@ -53,3 +55,30 @@ export async function getTableOrder(table_no: string): Promise<TableOrder> {
     return { message: null };
   }
 } 
+
+export interface SyncOrderRequest {
+  table?: string;
+  customer?: string;
+  items: Array<{
+    item: string;
+    item_name: string;
+    rate: number;
+    qty: number;
+  }>;
+  no_of_pax: number;
+  mode_of_payment?: string;
+  cashier?: string;
+  owner?: string;
+  waiter?: string;
+  pos_profile: string;
+  invoice?: string | null;
+  aggregator_id?: string | null;
+  order_type: string;
+  last_invoice?: string | null;
+  comments?: string | null;
+  room?: string;
+}
+
+export const syncOrder = async (data: SyncOrderRequest) => {
+  return call.post( 'ury.ury.doctype.ury_order.ury_order.sync_order',data);
+}; 

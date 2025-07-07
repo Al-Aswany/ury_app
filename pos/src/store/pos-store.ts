@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../lib/storage';
 import { getRestaurantMenu, getAggregatorMenu, MenuItem as APIMenuItem } from '../lib/menu-api';
-import { getPosProfileLimitedFields, getPosProfileFull, getCurrencyInfo, PosProfileFull } from '../lib/pos-profile-api';
+import { getCurrencyInfo, PosProfileCombined, getCombinedPosProfile } from '../lib/pos-profile-api';
 import { getMenuCourses } from '../lib/menu-course-api';
 import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
@@ -102,6 +102,7 @@ interface POSState {
   currencySymbol: string | null;
   isUpdatingOrder: boolean; // Flag to track if we're updating an existing order
   orderId: string | null; // ID of the order being updated
+  posProfile: PosProfileCombined | null;
   fetchMenuItems: () => Promise<void>;
   fetchAggregatorMenu: (aggregator: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -120,7 +121,6 @@ interface POSState {
   initializeCart: () => Promise<void>;
   processPayment: (paymentModeId: string, amount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  posProfile: PosProfileFull | null;
   fetchPosProfile: () => Promise<void>;
   customerGroups: string[];
   territories: string[];
@@ -235,28 +235,26 @@ export const usePOSStore = create<POSState>((set, get) => ({
       }
 
       set({ profileLoading: true, error: null });
-      const limitedProfile = await getPosProfileLimitedFields();
-      if (!limitedProfile.pos_profile) {
-        throw new Error('No POS profile found');
-      }
-      const fullProfile = await getPosProfileFull(limitedProfile.pos_profile);
+      const combinedProfile = await getCombinedPosProfile();
       
       // Cache the profile in session storage
-      sessionStorage.setItem('posProfile', JSON.stringify(fullProfile));
+      sessionStorage.setItem('posProfile', JSON.stringify(combinedProfile));
       set({ 
-        posProfile: fullProfile, 
+        posProfile: combinedProfile, 
         profileLoading: false,
-        currency: fullProfile.currency
+        currency: combinedProfile.currency || 'INR'
       });
-      storage.setItem('currency', fullProfile.currency);
-
+      
       // Fetch currency symbol if not in storage
       if (!storage.getItem('currencySymbol')) {
         await get().fetchCurrencySymbol();
       }
     } catch (error) {
-      set({ profileLoading: false, error: 'Failed to load profile' });
-      throw error; // Re-throw to be caught by initializeApp
+      console.error('Error fetching POS profile:', error);
+      set({ 
+        error: 'Failed to fetch POS profile',
+        profileLoading: false 
+      });
     }
   },
 
