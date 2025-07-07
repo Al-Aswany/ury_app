@@ -25,8 +25,8 @@ function NewCustomerForm({
   prefillPhone?: string;
 }) {
   const { customerGroups, territories, fetchCustomerGroups, fetchTerritories, setSelectedCustomer } = usePOSStore();
-  const [newCustomerName, setNewCustomerName] = React.useState(prefillName);
-  const [newCustomerPhone, setNewCustomerPhone] = React.useState(prefillPhone);
+  const [newCustomerName, setNewCustomerName] = React.useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = React.useState('');
   const [newCustomerGroup, setNewCustomerGroup] = React.useState("");
   const [newCustomerTerritory, setNewCustomerTerritory] = React.useState("");
   const [formError, setFormError] = React.useState(false);
@@ -38,6 +38,16 @@ function NewCustomerForm({
   const [localIsCreatingCustomer, setLocalIsCreatingCustomer] = React.useState(false);
   const isCreatingCustomer = parentIsCreatingCustomer ?? localIsCreatingCustomer;
   const setIsCreatingCustomer = setParentIsCreatingCustomer ?? setLocalIsCreatingCustomer;
+
+  // Handle prefill values
+  React.useEffect(() => {
+    if (prefillName) {
+      setNewCustomerName(prefillName);
+    }
+    if (prefillPhone) {
+      setNewCustomerPhone(prefillPhone);
+    }
+  }, [prefillName, prefillPhone]);
 
   // Fetch groups/territories on mount
   React.useEffect(() => {
