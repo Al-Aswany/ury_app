@@ -17,7 +17,6 @@ const MenuList: React.FC<MenuListProps> = ({ onItemClick }) => {
     searchQuery,
     quickFilter,
     fetchMenuItems,
-    setSearchQuery,
     isMenuInteractionDisabled,
     isOrderInteractionDisabled
   } = usePOSStore();

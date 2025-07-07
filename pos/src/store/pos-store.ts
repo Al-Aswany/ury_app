@@ -323,7 +323,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
 
   fetchAggregatorMenu: async (aggregator: string) => {
     try {
-      set({ menuLoading: true, error: null }); // Use menuLoading instead of loading
+      set({ menuLoading: true, error: null });
       const items = await getAggregatorMenu(aggregator);
       
       // Transform API items to match the UI format
@@ -336,12 +336,10 @@ export const usePOSStore = create<POSStore>((set, get) => ({
         category: item.course
       }));
 
-      set({ menuItems, selectedAggregator: { customer: aggregator } }); // Use menuLoading instead of loading
+      set({ menuItems, menuLoading: false });
     } catch (error) {
-      set({ error: 'Failed to load aggregator menu' }); // Use menuLoading instead of loading
+      set({ error: 'Failed to load aggregator menu', menuLoading: false });
       console.error('Error loading aggregator menu:', error);
-    } finally {
-      set({ menuLoading: false }); // Use menuLoading instead of loading
     }
   },
 

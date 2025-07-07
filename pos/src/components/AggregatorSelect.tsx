@@ -8,12 +8,12 @@ interface AggregatorSelectProps {
 }
 
 export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
-  const { selectedAggregator, setSelectedAggregator } = usePOSStore();
+  const { selectedAggregator, setSelectedAggregator, fetchAggregatorMenu } = usePOSStore();
   const [aggregators, setAggregators] = useState<Aggregator[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchAggregators = async () => {
+    const fetchAggregatorsList = async () => {
       setLoading(true);
       try {
         const data = await getAggregators();
@@ -25,17 +25,23 @@ export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
       }
     };
 
-    fetchAggregators();
+    fetchAggregatorsList();
   }, []);
+
+  const handleAggregatorChange = async (value: string) => {
+    const aggregator = aggregators.find(a => a.customer === value);
+    setSelectedAggregator(aggregator || null);
+    
+    if (aggregator) {
+      await fetchAggregatorMenu(aggregator.customer);
+    }
+  };
 
   return (
     <div>
       <Select
         value={selectedAggregator?.customer || ''}
-        onValueChange={(value) => {
-          const aggregator = aggregators.find(a => a.customer === value);
-          setSelectedAggregator(aggregator || null);
-        }}
+        onValueChange={handleAggregatorChange}
         disabled={disabled || loading}
         placeholder={loading ? 'Loading aggregators...' : 'Select an aggregator'}
       >
