@@ -6,8 +6,17 @@ import Spotlight from './components/Spotlight';
 import POS from './pages/POS';
 import AuthGuard from './components/AuthGuard';
 import { ToastProvider } from './components/ui/toast';
+import { usePOSStore } from './store/pos-store';
+import { useEffect } from 'react';
 
 function App() {
+  const {
+    initializeApp
+  } = usePOSStore();
+  
+  useEffect(() => {
+    initializeApp();
+  }, [initializeApp]);
   return (
     <>
       <ToastProvider />

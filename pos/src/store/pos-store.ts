@@ -8,10 +8,12 @@ import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 import { getTableOrder, TableOrder } from '../lib/order-api';
 import { getPaymentModes } from '../lib/payment-api';
+import { call } from '../lib/frappe-sdk';
 
 // Constants
 const MAX_QUANTITY = 99;
 const MIN_QUANTITY = 0;
+const ITEMS_PER_PAGE = 10;
 
 // Custom error class for cart operations
 class CartError extends Error {
@@ -89,7 +91,7 @@ interface POSState {
   activeOrders: OrderItem[];
   selectedCategory: string;
   selectedTable: string | null;
-  selectedRoom: string | null; // Add selected room to state
+  selectedRoom: string | null;
   searchQuery: string;
   selectedCustomer: Customer | null;
   selectedOrderType: OrderType;
@@ -97,7 +99,7 @@ interface POSState {
   selectedItem: MenuItem | null;
   cartId: string | null;
   loading: boolean;
-  menuLoading: boolean; // Separate loading state for menu
+  menuLoading: boolean;
   orderLoading: boolean;
   profileLoading: boolean;
   error: string | null;
@@ -106,9 +108,16 @@ interface POSState {
   selectedAggregator: Aggregator | null;
   currency: string;
   currencySymbol: string | null;
-  isUpdatingOrder: boolean; // Flag to track if we're updating an existing order
-  orderId: string | null; // ID of the order being updated
+  isUpdatingOrder: boolean;
+  orderId: string | null;
   posProfile: PosProfileCombined | null;
+  customerGroups: string[];
+  territories: string[];
+  tableOrder: TableOrder | null;
+  isInitializing: boolean;
+}
+
+interface POSStore extends POSState {
   fetchMenuItems: () => Promise<void>;
   fetchAggregatorMenu: (aggregator: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -120,7 +129,7 @@ interface POSState {
   setSelectedCategory: (category: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCustomer: (customer: Customer | null) => void;
-  setSelectedTable: (table: string | null, room: string | null) => void; // Update to include room
+  setSelectedTable: (table: string | null, room: string | null) => void;
   setSelectedOrderType: (type: OrderType) => void;
   setQuickFilter: (filter: 'all' | 'special') => void;
   setSelectedItem: (item: MenuItem | null) => void;
@@ -128,8 +137,6 @@ interface POSState {
   processPayment: (paymentMode: string, amount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
   fetchPosProfile: () => Promise<void>;
-  customerGroups: string[];
-  territories: string[];
   fetchCustomerGroups: () => Promise<void>;
   fetchTerritories: () => Promise<void>;
   fetchCurrencySymbol: () => Promise<void>;
@@ -138,19 +145,13 @@ interface POSState {
   validateQuantity: (quantity: number) => boolean;
   getItemPrice: (item: OrderItem) => number;
   getItemQuantityFromCart: (item: MenuItem) => number;
-  tableOrder: TableOrder | null;
   loadTableOrder: (table: string) => Promise<void>;
   clearTableOrder: () => void;
   isMenuInteractionDisabled: () => boolean;
   isOrderInteractionDisabled: () => boolean;
-  isInitializing: boolean;
   initializeApp: () => Promise<void>;
-  setOrderForUpdate: (orderId: string | null) => void; // Function to set order update mode
+  setOrderForUpdate: (orderId: string | null) => void;
   resetOrderState: () => void;
-  setSelectedAggregator: (aggregator: Aggregator | null) => void;
-}
-
-interface POSStore extends POSState {
   setSelectedAggregator: (aggregator: Aggregator | null) => void;
 }
 
@@ -172,7 +173,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   activeOrders: [],
   selectedCategory: '',
   selectedTable: null,
-  selectedRoom: null, // Initialize selected room
+  selectedRoom: null,
   searchQuery: '',
   selectedCustomer: null,
   selectedOrderType: DEFAULT_ORDER_TYPE as OrderType,
@@ -184,7 +185,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   orderLoading: false,
   profileLoading: false,
   error: null,
-  paymentModes: ['Cash'], // Default value
+  paymentModes: ['Cash'],
   orders: [],
   posProfile: null,
   customerGroups: [],
@@ -201,7 +202,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
     try {
       set({ isInitializing: true, error: null });
       
-      // Load profile, menu, categories, and payment modes in parallel
       const [profileResult, menuResult, categoriesResult, paymentModesResult] = await Promise.allSettled([
         get().fetchPosProfile(),
         get().fetchMenuItems(),
@@ -209,7 +209,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
         get().fetchPaymentModes()
       ]);
 
-      // Handle any errors
       if (profileResult.status === 'rejected' || 
           menuResult.status === 'rejected' || 
           categoriesResult.status === 'rejected' ||
@@ -232,7 +231,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
 
   fetchPosProfile: async () => {
     try {
-      // Check session storage first
       const cached = sessionStorage.getItem('posProfile');
       if (cached) {
         const profile = JSON.parse(cached);
@@ -241,7 +239,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           profileLoading: false,
           currency: profile.currency || 'INR'
         });
-        // Fetch currency symbol if not in storage
         if (!storage.getItem('currencySymbol')) {
           await get().fetchCurrencySymbol();
         }
@@ -251,7 +248,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       set({ profileLoading: true, error: null });
       const combinedProfile = await getCombinedPosProfile();
       
-      // Cache the profile in session storage
       sessionStorage.setItem('posProfile', JSON.stringify(combinedProfile));
       set({ 
         posProfile: combinedProfile, 
@@ -259,7 +255,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
         currency: combinedProfile.currency || 'INR'
       });
       
-      // Fetch currency symbol if not in storage
       if (!storage.getItem('currencySymbol')) {
         await get().fetchCurrencySymbol();
       }
@@ -282,7 +277,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       storage.setItem('currencySymbol', symbol);
     } catch (error) {
       console.error('Error fetching currency symbol:', error);
-      // Fallback to currency code if symbol fetch fails
       set({ currencySymbol: get().currency });
       storage.setItem('currencySymbol', get().currency);
     }
@@ -296,7 +290,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       set({ menuLoading: true, error: null });
       const items = await getRestaurantMenu(posProfile.name, selectedRoom, selectedOrderType);
       
-      // Transform API items to match the UI format
       const menuItems: MenuItem[] = items.map(item => ({
         id: item.item,
         name: item.item_name,
@@ -326,7 +319,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       set({ menuLoading: true, error: null });
       const items = await getAggregatorMenu(aggregator);
       
-      // Transform API items to match the UI format
       const menuItems: MenuItem[] = items.map(item => ({
         ...item,
         id: item.item,
@@ -358,16 +350,14 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       set({ categories: categoryNames });
     } catch (error) {
       set({ error: 'Failed to load menu categories' });
-      throw error; // Re-throw to be caught by initializeApp
+      throw error;
     }
   },
 
   fetchPaymentModes: async () => {
     try {
       const modes = await getPaymentModes();
-      set({ 
-        paymentModes: modes,
-      });
+      set({ paymentModes: modes });
     } catch (error) {
       console.error('Failed to fetch payment modes:', error);
     }
@@ -379,7 +369,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
 
   addToOrder: async (item: OrderItem) => {
     try {
-      // Validate quantity
       if (!get().validateQuantity(item.quantity)) {
         throw new CartError(`Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`);
       }
@@ -388,7 +377,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const existingItemIndex = get().activeOrders.findIndex(orderItem => orderItem.uniqueId === uniqueId);
 
       if (existingItemIndex !== -1) {
-        // If item exists, validate and update its quantity
         const existingItem = get().activeOrders[existingItemIndex];
         const newQuantity = existingItem.quantity + item.quantity;
 
@@ -404,7 +392,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
         
         set({ activeOrders: newOrders });
       } else {
-        // If item doesn't exist, add it as new
         const newOrders = [...get().activeOrders, { ...item, uniqueId }];
         set({ activeOrders: newOrders });
       }
@@ -463,7 +450,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
     } else {
       get().clearTableOrder();
     }
-    // Fetch menu items when room changes
     if (room) {
       get().fetchMenuItems();
     }
@@ -471,13 +457,11 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   setSelectedOrderType: (type) => {
     const { fetchMenuItems } = get();
     
-    // Only clear active orders and update order type
     set({ 
       activeOrders: [],
       selectedOrderType: type 
     });
     
-    // Fetch menu items for the new order type
     if (type !== 'Aggregators') {
       fetchMenuItems();
     }
@@ -507,14 +491,13 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const newOrders = [...get().orders, order];
       set({ orders: newOrders });
       
-      // Clear cart after successful payment
       await get().clearOrder();
     } catch (error) {
       set({ error: (error as Error).message });
     }
   },
 
-  updateOrderStatus: async (orderId, status) => {
+  updateOrderStatus: async (orderId: string, status: Order['status']) => {
     try {
       const newOrders = get().orders.map(order => 
         order.id === orderId 
@@ -597,10 +580,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       set({ orderLoading: true, error: null });
       const response = await getTableOrder(table);
       
-      // If there's an existing order, set it in the state
       if (response.message) {
         const order = response.message;
-        // Convert the order items to our internal format
         const orderItems: OrderItem[] = order.items.map(item => ({
           id: item.item_code,
           name: item.item_name,
@@ -608,18 +589,17 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           quantity: item.qty,
           amount: item.amount,
           image: item.image || null,
-          uniqueId: uuidv4(), // Generate a new unique ID for each item
+          uniqueId: uuidv4(),
           item: item.item_code,
           item_name: item.item_name,
           item_image: null,
           item_imgae: null,
-          course: '', // Empty string instead of null
+          course: '',
           description: item.description || '',
           special_dish: 0,
           tax_rate: 0,
         }));
 
-        // Set the order in our state
         set({ 
           tableOrder: response,
           activeOrders: orderItems,
@@ -628,11 +608,10 @@ export const usePOSStore = create<POSStore>((set, get) => ({
             name: order.customer_name,
             phone: order.mobile_number,
           } : null,
-          isUpdatingOrder: true, // Set update mode
-          orderId: order.name, // Set the order ID
+          isUpdatingOrder: true,
+          orderId: order.name,
         });
       } else {
-        // No active order for this table, clear the state
         set({ 
           tableOrder: null,
           activeOrders: [],
@@ -685,16 +664,14 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       activeOrders: [],
       selectedItem: null,
       orderLoading: false,
-      menuItems: [], // Clear menu items when resetting
+      menuItems: [],
       error: null,
       selectedOrderType: DEFAULT_ORDER_TYPE
     });
 
-    // Fetch menu items for the default order type
     fetchMenuItems();
   },
 
-  // Helper functions to check if UI should be disabled
   isMenuInteractionDisabled: () => {
     const state = get();
     return state.menuLoading || state.profileLoading;

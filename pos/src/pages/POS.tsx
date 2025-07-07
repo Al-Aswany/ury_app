@@ -12,21 +12,15 @@ import InitialLoader from '../components/InitialLoader';
 
 export default function POS() {
   const {
-    selectedCategory,
     searchQuery,
     setSearchQuery,
     quickFilter,
     setQuickFilter,
     setSelectedItem,
     addToOrder,
-    fetchCategories,
-    fetchPosProfile,
     loading,
     error,
-    posProfile,
     isMenuInteractionDisabled,
-    isOrderInteractionDisabled,
-    initializeApp,
     isInitializing,
   } = usePOSStore();
   
@@ -34,10 +28,6 @@ export default function POS() {
   const [showSearch, setShowSearch] = useState(false);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef(0);
-
-  useEffect(() => {
-    initializeApp();
-  }, [initializeApp]);
 
   useEffect(() => {
     if (showSearch) {
