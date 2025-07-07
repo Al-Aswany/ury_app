@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutGrid, 
   ClipboardList, 
-  Settings, 
-  TrendingUp,
-  Users,
-  History,
-  ShoppingCart
 } from 'lucide-react';
-import { cn, formatCurrency } from '../lib/utils';
+import { cn } from '../lib/utils';
 import { usePOSStore } from '../store/pos-store';
 import PaymentDialog from './PaymentDialog';
 
 const Footer = () => {
-  const { activeOrders, clearOrder } = usePOSStore();
+  const { activeOrders } = usePOSStore();
   const [showPayment, setShowPayment] = useState(false);
 
   const total = activeOrders.reduce((sum, item) => {
@@ -26,10 +21,6 @@ const Footer = () => {
   const navItems = [
     { icon: LayoutGrid, label: 'POS', path: '/' },
     { icon: ClipboardList, label: 'Orders', path: '/orders' },
-    { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
-    { icon: Users, label: 'Customers', path: '/customers' },
-    { icon: History, label: 'History', path: '/history' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   return (

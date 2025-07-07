@@ -20,8 +20,6 @@ function App() {
               <Routes>
                 <Route path="/" element={<POS/>} />
                 <Route path="/orders" element={<Orders />} />
-                <Route path="/analytics" element={<div className="p-6">Analytics - Coming Soon</div>} />
-                <Route path="/customers" element={<div className="p-6">Customers - Coming Soon</div>} />
               </Routes>
             </div>
             <Footer />
