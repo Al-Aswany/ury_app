@@ -7,6 +7,9 @@ from frappe import _
 from frappe.model.document import Document
 from erpnext.controllers.queries import item_query
 from ury.ury_pos.api import getBranch, getBranchRoom
+from ury.ury.api.ury_kot_generate import kot_execute
+from ury.ury.api.ury_kot_generate import process_items_for_cancel_kot
+
 from frappe import cache
 
 
@@ -126,7 +129,6 @@ def sync_order(
     aggregator_id=None,
     room=None
 ):
-    """Sync the sales order related to the table"""
     
     user_role = frappe.get_roles()
     posprofile = frappe.get_doc("POS Profile", pos_profile)
@@ -287,13 +289,7 @@ def sync_order(
 
 
     try:
-        apps = frappe.get_single("Installed Applications").installed_applications
-        app_array = [app.app_name for app in apps if app.app_name == "ury_mosaic"]
-
-        if app_array:
-            from ury_mosaic.ury_mosaic.api.ury_kot_generate import kot_execute
-
-            kot_execute(invoice.name, customer, table, items, past_item, comments)
+        kot_execute(invoice.name, customer, table, items, past_item, comments)
 
     except Exception as e:
         # If an exception occurs (e.g., "kot" app not found), it will be caught here without affect the code execution.
@@ -545,11 +541,7 @@ def cancel_order(invoice_id, reason):
     )
 
     try:
-        apps = frappe.get_single("Installed Applications").installed_applications
-        app_array = [app.app_name for app in apps if app.app_name == "ury_mosaic"]
-
-        if app_array:
-            cancel_kot(invoice_id)
+        cancel_kot(invoice_id)
 
     except Exception as e:
         # If an exception occurs (e.g., "kot" app not found), it will be caught here without effecting execution
@@ -569,8 +561,6 @@ def cancel_order(invoice_id, reason):
 # Method for URY POS
 @frappe.whitelist()
 def make_invoice(customer, payments, cashier, pos_profile,owner, additionalDiscount=None, table=None, invoice=None):
-    """Make table based on Sales Order"""
-    
     order_type =  invoice_name = frappe.get_value("POS Invoice",invoice , "order_type")
     invoice = get_order_invoice(table, invoice, order_type, "Payments")
 
@@ -598,7 +588,6 @@ def make_invoice(customer, payments, cashier, pos_profile,owner, additionalDisco
 
 # Cancel KOT Doc Creation
 def cancel_kot(invoice_id):
-    from ury_mosaic.ury_mosaic.api.ury_kot_generate import process_items_for_cancel_kot
 
     pos_invoice = frappe.get_doc("POS Invoice", invoice_id)
     pos_profile_id = pos_invoice.pos_profile
