@@ -5,3 +5,10 @@
 tags
 ury/docs/current
 node_modules/
+ury/public/urypos
+ury/public/URYMosaic
+urypos/yarn.lock
+URYMosaic/yarn.lock
+ury/www/urypos.html
+ury/www/URYMosaic.html
+build
