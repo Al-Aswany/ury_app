@@ -454,11 +454,7 @@ def table_transfer(table, newTable, invoice):
         pos_invoice.save()
 
         try:
-            apps = frappe.get_single("Installed Applications").installed_applications
-            app_array = [app.app_name for app in apps if app.app_name == "ury_mosaic"]
-
-            if app_array:
-                change_table_in_kot(
+            change_table_in_kot(
                     pos_invoice.name, new_table.name, pos_invoice.branch
                 )
 

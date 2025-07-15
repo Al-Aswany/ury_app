@@ -470,6 +470,7 @@ def getPosProfile():
         enable_discount = pos_profiles.custom_enable_discount
         multiple_cashier = pos_profiles.custom_enable_multiple_cashier
         edit_order_type = pos_profiles.custom_edit_order_type
+        enable_kot_reprint = pos_profiles.custom_enable_kot_reprint
         if multiple_cashier:
             details = getBranchRoom()
             room = details[0].get('name') 
@@ -542,15 +543,10 @@ def getPosProfile():
         "enable_discount":enable_discount,
         "multiple_cashier":multiple_cashier,
         "owner":owner,
-        "edit_order_type":edit_order_type
+        "edit_order_type":edit_order_type,
+        "enable_kot_reprint":enable_kot_reprint
 
     }
-
-
-    apps = frappe.get_single("Installed Applications").installed_applications
-    app_array = [app.app_name for app in apps if app.app_name == "ury_mosaic"]
-    if app_array:
-        invoice_details["enable_kot_reprint"] = pos_profiles.custom_enable_kot_reprint
 
     return invoice_details
 

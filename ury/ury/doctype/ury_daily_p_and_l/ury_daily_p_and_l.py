@@ -537,6 +537,6 @@ class URYDailyPandL(Document):
 	@frappe.whitelist()
 	def get_proft_loss_details(self):
 		return frappe.render_template(
-			"ury_pulse/doctype/ury_daily_p_and_l/profit_loss_details.html",
+			"ury/doctype/ury_daily_p_and_l/profit_loss_details.html",
 			{"data": self, "currency": "INR"},
 		)

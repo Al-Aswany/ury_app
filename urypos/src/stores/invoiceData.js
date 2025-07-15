@@ -435,7 +435,7 @@ export const useInvoiceDataStore = defineStore("invoiceData", {
         invoice_number: invoice,
       };
       this.call
-        .get("ury_mosaic.ury_mosaic.api.ury_kot_reprint.reprint_kot", invoiceData)
+        .get("ury.ury.api.ury_kot_reprint.reprint_kot", invoiceData)
         .then((result) => {
           if (result.message === "Success") {
             this.kotPrinting=false;

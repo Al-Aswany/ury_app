@@ -28,7 +28,6 @@ frappe.ui.form.on('URY Daily P and L', {
 					frm.set_value("materials_consumed",[])
 					frappe.db.get_doc('URY Report Settings', frm.doc.branch).then(report_settings => {
 						// Access the child table data from Report Settings
-						console.log(report_settings)
 			
 						report_settings.consumables.forEach(materials_data_item => {
 						
@@ -91,7 +90,6 @@ function set_electricity_closing(frm) {
 				},
 				callback: function(response) {
 					if (response.message && response.message.length > 0) {
-						console.log(response.message)
 						frm.set_value("electricity_opening",response.message[0].electricity_closing)
 					}
 					else {
