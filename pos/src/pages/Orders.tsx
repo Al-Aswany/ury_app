@@ -1,10 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { Clock, User, UserCheck, Receipt, Calendar, Printer, Pencil, X } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { showToast } from '../components/ui/toast';
 import OrderStatusSidebar from '../components/OrderStatusSidebar';
 import { useRootStore } from '../store/root-store';
 import { formatCurrency } from '../lib/utils';
 import { Spinner } from '../components/ui/spinner';
+import { Textarea } from '../components/ui/textarea';
 
 export default function Orders() {
   const { 
@@ -28,6 +32,9 @@ export default function Orders() {
   } = useRootStore();
 
   const mounted = useRef(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [cancelReason, setCancelReason] = React.useState('');
+  const [cancelLoading, setCancelLoading] = React.useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -67,6 +74,32 @@ export default function Orders() {
   const handleOrderClick = (order: any) => {
     selectOrder(order);
   };
+
+  async function handleCancelOrder() {
+    if (!selectedOrder) return;
+    if (!cancelReason.trim()) {
+      showToast.error('Please enter a reason for cancellation.');
+      return;
+    }
+    setCancelLoading(true);
+    try {
+      const res = await fetch('/api/method/ury.ury.doctype.ury_order.ury_order.cancel_order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_id: selectedOrder.name, reason: cancelReason })
+      });
+      if (!res.ok) throw new Error('Failed to cancel order');
+      showToast.success('Order cancelled successfully');
+      setCancelDialogOpen(false);
+      setCancelReason('');
+      clearSelectedOrder();
+      fetchOrders();
+    } catch (err) {
+      showToast.error(err instanceof Error ? err.message : 'Failed to cancel order');
+    } finally {
+      setCancelLoading(false);
+    }
+  }
 
   if (error) {
     return (
@@ -214,6 +247,7 @@ export default function Orders() {
                   type="button"
                   className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
                   aria-label="Cancel order"
+                  onClick={() => setCancelDialogOpen(true)}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -222,6 +256,34 @@ export default function Orders() {
                 </Badge>
               </div>
             </div>
+            {/* Cancel Order Dialog */}
+            <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Cancel Order</DialogTitle>
+                  <DialogDescription>
+                    Please provide a reason for cancelling this order.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="px-6 mb-3">
+                <Textarea
+                  placeholder="Enter cancel reason"
+                  value={cancelReason}
+                  onChange={e => setCancelReason(e.target.value)}
+                  disabled={cancelLoading}
+                  autoFocus
+                />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelLoading}>
+                    Close
+                  </Button>
+                  <Button variant="danger" onClick={handleCancelOrder} disabled={cancelLoading}>
+                    {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto p-6 pb-40">
               {/* Order Header (now only info, not name/buttons) */}
