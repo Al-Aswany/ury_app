@@ -3,6 +3,7 @@ import { OrderType } from '../../data/order-types';
 import { Customer, OrderItem } from '../pos-store';
 import { call } from '../../lib/frappe-sdk';
 import { getPOSInvoices, getPOSInvoiceItems, POSInvoiceItem, POSInvoiceTax } from '../../lib/invoice-api';
+import { searchPosInvoice } from '../../lib/invoice-api';
 
 export interface POSInvoice {
   name: string;
@@ -37,6 +38,7 @@ export interface OrdersState {
   selectedOrderTaxes: POSInvoiceTax[];
   selectedOrderLoading: boolean;
   selectedOrderError: string | null;
+  orderSearchQuery: string;
 }
 
 export interface OrdersActions {
@@ -47,6 +49,7 @@ export interface OrdersActions {
   setSelectedStatus: (status: POSInvoice['status']) => Promise<void>;
   selectOrder: (order: POSInvoice) => Promise<void>;
   clearSelectedOrder: () => void;
+  setOrderSearchQuery: (query: string) => void;
 }
 
 export type OrdersSlice = OrdersState & OrdersActions;
@@ -74,22 +77,35 @@ export const createOrdersSlice: StateCreator<
   selectedOrderTaxes: [],
   selectedOrderLoading: false,
   selectedOrderError: null,
+  orderSearchQuery: '',
 
   // Actions
   fetchOrders: async (page = 1) => {
     try {
       set({ orderLoading: true, error: null });
-      
+      const { orderSearchQuery, selectedStatus } = get();
+      if (orderSearchQuery && orderSearchQuery.trim()) {
+        // Use search API
+        const res = await searchPosInvoice(orderSearchQuery, selectedStatus);
+        set({
+          orders: res.data || [],
+          pagination: {
+            currentPage: 1,
+            hasNextPage: false,
+            itemsPerPage: ITEMS_PER_PAGE,
+          },
+          orderLoading: false
+        });
+        return;
+      }
+      // Default fetch
       const limitStart = (page - 1) * ITEMS_PER_PAGE;
-      const status = get().selectedStatus;
-      
+      const status = selectedStatus;
       const { invoices, hasMore } = await getPOSInvoices({
         status,
         limit: ITEMS_PER_PAGE,
         limit_start: limitStart,
       });
-
-      console.log("HAS MORE ", hasMore)
       set({ 
         orders: invoices,
         pagination: {
@@ -178,4 +194,6 @@ export const createOrdersSlice: StateCreator<
       });
     }
   },
+
+  setOrderSearchQuery: (query) => set({ orderSearchQuery: query }),
 }); 

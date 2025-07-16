@@ -21,6 +21,7 @@ import { usePOSStore } from '../store/pos-store';
 import type { RootState } from '../store/root-store';
 import { logout } from '../lib/auth-api';
 import { showToast } from './ui/toast';
+import { debounce } from 'lodash-es';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -31,18 +32,41 @@ const Header = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
   const { searchQuery, setSearchQuery } = usePOSStore();
+  const { orderSearchQuery, setOrderSearchQuery, fetchOrders } = useRootStore();
+  const [orderSearchInput, setOrderSearchInput] = useState(orderSearchQuery);
 
-  // Determine placeholder based on route
+  // Determine placeholder and handlers based on route
   let searchPlaceholder = 'Search orders, menu items, or customers...';
   let searchValue: string | undefined = undefined;
   let searchOnChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | undefined = undefined;
   if (location.pathname === '/orders') {
     searchPlaceholder = 'Search Orders';
+    searchValue = orderSearchInput;
+    searchOnChange = (e) => setOrderSearchInput(e.target.value);
   } else if (location.pathname === '/') {
     searchPlaceholder = 'Search Menu';
     searchValue = searchQuery;
     searchOnChange = (e) => setSearchQuery(e.target.value);
   }
+
+  // Debounce order search
+  useEffect(() => {
+    if (location.pathname !== '/orders') return;
+    const handler = setTimeout(() => {
+      setOrderSearchQuery(orderSearchInput);
+      if (!orderSearchInput.trim()) {
+        fetchOrders();
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [orderSearchInput, setOrderSearchQuery, fetchOrders, location.pathname]);
+
+  // Keep input in sync with store (if cleared elsewhere)
+  useEffect(() => {
+    if (location.pathname === '/orders' && orderSearchQuery !== orderSearchInput) {
+      setOrderSearchInput(orderSearchQuery);
+    }
+  }, [orderSearchQuery, location.pathname]);
 
   // Enhanced notification data with restaurant-specific alerts
   const notifications = [

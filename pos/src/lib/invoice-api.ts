@@ -105,3 +105,16 @@ export async function updateInvoiceStatus(
     throw new Error('Failed to update invoice status');
   }
 } 
+
+export async function searchPosInvoice(query: string, status: string) {
+  try {
+    const response = await call.get('ury.ury_pos.api.searchPosInvoice', {
+      query,
+      status,
+    });
+    return response.message;
+  } catch (error) {
+    console.error('Error searching POS invoices:', error);
+    throw error;
+  }
+} 

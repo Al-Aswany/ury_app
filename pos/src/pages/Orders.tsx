@@ -23,12 +23,17 @@ export default function Orders() {
     goToNextPage,
     goToPreviousPage,
     selectOrder,
-    clearSelectedOrder
+    clearSelectedOrder,
+    orderSearchQuery
   } = useRootStore();
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [orderSearchQuery]);
 
   // Function to format the date and time
   const formatDateTime = (date: string, time: string) => {
