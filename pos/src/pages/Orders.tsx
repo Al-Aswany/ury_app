@@ -448,6 +448,12 @@ export default function Orders() {
           onClose={() => setShowPaymentDialog(false)}
           grandTotal={selectedOrder.grand_total}
           roundedTotal={selectedOrder.rounded_total}
+          invoice={selectedOrder.name}
+          customer={selectedOrder.customer}
+          posProfile={posStore.posProfile?.name || ''}
+          table={selectedOrder.restaurant_table || null}
+          cashier={posStore.posProfile?.cashier || ''}
+          owner={posStore.posProfile?.cashier || ''}
         />
       )}
     </div>
