@@ -28,7 +28,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   cashier,
   owner
 }) => {
-  const { paymentModes, fetchPaymentModes } = usePOSStore();
+  const { paymentModes, fetchPaymentModes, posProfile: storePosProfile } = usePOSStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
@@ -143,39 +143,41 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             </Button>
           </div>
 
-          {/* Discount Section */}
-          <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Percent className="w-5 h-5" />
-              Apply Discount
-            </h3>
-            <div className="flex gap-2">
-              <Select
-                value={discountType}
-                onValueChange={(val) => setDiscountType(val as 'percentage' | 'fixed')}
-                size="sm"
-                className="w-24"
-              >
-                <SelectItem value="percentage">Percentage</SelectItem>
-                <SelectItem value="fixed">Fixed</SelectItem>
-              </Select>
-              <Input
-                type="number"
-                value={discountValue}
-                onChange={(e) => setDiscountValue(e.target.value)}
-                placeholder={discountType === 'percentage' ? 'Enter %' : 'Enter amount'}
-                size="sm"
-                className="flex-1"
-              />
-              <Button
-                onClick={handleApplyDiscount}
-                variant="default"
-                size="sm"
-              >
-                Apply
-              </Button>
+          {/* Discount Section (conditional) */}
+          {storePosProfile?.enable_discount === 1 && (
+            <div className="space-y-4 mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Percent className="w-5 h-5" />
+                Apply Discount
+              </h3>
+              <div className="flex gap-2">
+                <Select
+                  value={discountType}
+                  onValueChange={(val) => setDiscountType(val as 'percentage' | 'fixed')}
+                  size="sm"
+                  className="w-24"
+                >
+                  <SelectItem value="percentage">Percentage</SelectItem>
+                  <SelectItem value="fixed">Fixed</SelectItem>
+                </Select>
+                <Input
+                  type="number"
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                  placeholder={discountType === 'percentage' ? 'Enter %' : 'Enter amount'}
+                  size="sm"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleApplyDiscount}
+                  variant="default"
+                  size="sm"
+                >
+                  Apply
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Payment Methods Section - Split Payment */}
           <div className="space-y-4 mb-6">
