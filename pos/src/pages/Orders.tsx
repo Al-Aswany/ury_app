@@ -31,9 +31,6 @@ export default function Orders() {
     fetchOrders();
   }, [fetchOrders]);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [orderSearchQuery]);
 
   // Function to format the date and time
   const formatDateTime = (date: string, time: string) => {

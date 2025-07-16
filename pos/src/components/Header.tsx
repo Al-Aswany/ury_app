@@ -54,12 +54,9 @@ const Header = () => {
     if (location.pathname !== '/orders') return;
     const handler = setTimeout(() => {
       setOrderSearchQuery(orderSearchInput);
-      if (!orderSearchInput.trim()) {
-        fetchOrders();
-      }
     }, 300);
     return () => clearTimeout(handler);
-  }, [orderSearchInput, setOrderSearchQuery, fetchOrders, location.pathname]);
+  }, [orderSearchInput, setOrderSearchQuery, location.pathname]);
 
   // Keep input in sync with store (if cleared elsewhere)
   useEffect(() => {
