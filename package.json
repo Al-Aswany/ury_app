@@ -4,7 +4,7 @@
       "ury-pos-build":"cd urypos && yarn build",
       "ury-mosaic-install":"cd URYMosaic && yarn install --check-files",
       "ury-mosaic-build": "cd URYMosaic && yarn build",
-      "postinstall": "yarn ury-pos-install && yarn mosaic-install",
+      "postinstall": "yarn ury-pos-install && yarn ury-mosaic-install",
       "build": "yarn ury-pos-build && yarn ury-mosaic-build"
     }
   }
