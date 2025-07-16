@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Clock, User, UserCheck, Receipt, Calendar, Printer } from 'lucide-react';
+import { Clock, User, UserCheck, Receipt, Calendar, Printer, Pencil, X } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
 import OrderStatusSidebar from '../components/OrderStatusSidebar';
 import { useRootStore } from '../store/root-store';
@@ -199,16 +199,33 @@ export default function Orders() {
           </div>
         ) : (
           <>
+            {/* Fixed Header */}
+            <div className="sticky top-0 left-0 right-0 z-20 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between min-h-[64px]">
+              <h2 className="text-xl font-semibold text-gray-900 truncate max-w-[10rem]">{selectedOrder.name}</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Edit order"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  aria-label="Cancel order"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <Badge variant={selectedOrder.status === 'Draft' ? 'secondary' : 'default'}>
+                  {selectedOrder.status}
+                </Badge>
+              </div>
+            </div>
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto p-6 pb-40">
-              {/* Order Header */}
+              {/* Order Header (now only info, not name/buttons) */}
               <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedOrder.name}</h2>
-                  <Badge variant={selectedOrder.status === 'Draft' ? 'secondary' : 'default'}>
-                    {selectedOrder.status}
-                  </Badge>
-                </div>
                 {/* Two-column Order Info */}
                 <div className="grid grid-cols-2 gap-4">
                   {/* First column: customer and time */}
