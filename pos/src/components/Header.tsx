@@ -60,10 +60,10 @@ const Header = () => {
 
   // Keep input in sync with store (if cleared elsewhere)
   useEffect(() => {
-    if (location.pathname === '/orders' && orderSearchQuery !== orderSearchInput) {
+    if (location.pathname === '/orders') {
       setOrderSearchInput(orderSearchQuery);
     }
-  }, [orderSearchQuery, location.pathname]);
+  }, [location.pathname, orderSearchQuery]);
 
   // Enhanced notification data with restaurant-specific alerts
   const notifications = [

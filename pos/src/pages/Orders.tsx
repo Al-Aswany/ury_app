@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Clock, User, UserCheck, Receipt, Calendar, Printer } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
 import OrderStatusSidebar from '../components/OrderStatusSidebar';
@@ -27,9 +27,20 @@ export default function Orders() {
     orderSearchQuery
   } = useRootStore();
 
+  const mounted = useRef(false);
+
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return; // Skip the first run
+    }
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderSearchQuery]);
 
 
   // Function to format the date and time
