@@ -30,7 +30,8 @@ const OrderPanel = () => {
     selectedCustomer,
     selectedAggregator,
     resetOrderState,
-    paymentModes
+    paymentModes,
+    orderId
   } = usePOSStore();
   const user = useRootStore((state: RootState) => state.user);
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
@@ -103,7 +104,8 @@ const OrderPanel = () => {
         cashier: posProfile.cashier,
         owner: user.name,
         mode_of_payment: paymentModes[0],
-        last_invoice: null,
+        last_invoice: isUpdatingOrder ? orderId : null,
+        invoice: isUpdatingOrder ? orderId : null,
         waiter: user.name
       };
 

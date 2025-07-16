@@ -9,6 +9,8 @@ import { useRootStore } from '../store/root-store';
 import { formatCurrency } from '../lib/utils';
 import { Spinner } from '../components/ui/spinner';
 import { Textarea } from '../components/ui/textarea';
+import { usePOSStore } from '../store/pos-store';
+import { useNavigate } from 'react-router-dom';
 
 export default function Orders() {
   const { 
@@ -31,10 +33,13 @@ export default function Orders() {
     orderSearchQuery
   } = useRootStore();
 
+  const posStore = usePOSStore();
+  const navigate = useNavigate();
   const mounted = useRef(false);
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [cancelReason, setCancelReason] = React.useState('');
   const [cancelLoading, setCancelLoading] = React.useState(false);
+  const [editLoading, setEditLoading] = React.useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -101,6 +106,52 @@ export default function Orders() {
     }
   }
 
+  async function handleEditOrder() {
+    if (!selectedOrder) return;
+    setEditLoading(true);
+    try {
+      const res = await fetch(`/api/method/frappe.client.get?doctype=POS+Invoice&name=${selectedOrder.name}`);
+      if (!res.ok) throw new Error('Failed to fetch order details');
+      const data = await res.json();
+      const order = data.message;
+      // Fill POS store
+      posStore.resetOrderState();
+      posStore.setOrderForUpdate(order.name);
+      posStore.setSelectedOrderType(order.order_type);
+      if (order.restaurant_table) {
+        posStore.setSelectedTable(order.restaurant_table, order.custom_restaurant_room || null);
+      }
+      posStore.setSelectedCustomer({ id: order.customer, name: order.customer_name, phone: order.mobile_number });
+      // Fill cart
+      const items = (order.items || []).map((item: any) => ({
+        id: item.item_code,
+        name: item.item_name,
+        price: item.rate,
+        quantity: item.qty,
+        amount: item.amount,
+        image: item.image || null,
+        uniqueId: item.name,
+        item: item.item_code,
+        item_name: item.item_name,
+        item_image: null,
+        item_imgae: null,
+        course: '',
+        description: item.description || '',
+        special_dish: 0,
+        tax_rate: 0,
+      }));
+      for (const cartItem of items) {
+        await posStore.addToOrder(cartItem);
+      }
+      // Redirect to POS page
+      navigate('/');
+    } catch (err) {
+      showToast.error(err instanceof Error ? err.message : 'Failed to edit order');
+    } finally {
+      setEditLoading(false);
+    }
+  }
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -122,7 +173,7 @@ export default function Orders() {
 
       {/* Middle Section - Order Cards */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden pr-96">
-        <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-20">
+        <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-40">
           {orderLoading ? (
             <div className="flex items-center justify-center h-full">
               <Spinner />
@@ -240,8 +291,11 @@ export default function Orders() {
                   type="button"
                   className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label="Edit order"
+                  onClick={handleEditOrder}
+                  disabled={editLoading}
                 >
                   <Pencil className="w-4 h-4" />
+                  {editLoading && <span className="ml-2 text-xs">Loading...</span>}
                 </button>
                 <button
                   type="button"
