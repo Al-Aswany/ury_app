@@ -19,6 +19,17 @@ export interface POSInvoice {
   order_type: OrderType;
 }
 
+export interface POSInvoiceItem {
+  item_name: string;
+  qty: number;
+  amount: number;
+}
+
+export interface POSInvoiceTax {
+  description: string;
+  rate: number;
+}
+
 interface GetPOSInvoicesResponse {
   message: {
     data: POSInvoice[];
@@ -30,6 +41,10 @@ interface GetPOSInvoicesParams {
   status: POSInvoice['status'];
   limit?: number;
   limit_start?: number;
+}
+
+interface GetPOSInvoiceItemsResponse {
+  message: [POSInvoiceItem[], POSInvoiceTax[]];
 }
 
 export async function getPOSInvoices({ 
@@ -54,6 +69,25 @@ export async function getPOSInvoices({
   } catch (error) {
     console.error('Error fetching POS invoices:', error);
     throw new Error('Failed to fetch POS invoices');
+  }
+}
+
+export async function getPOSInvoiceItems(invoiceId: string) {
+  try {
+    const response = await call.get<GetPOSInvoiceItemsResponse>(
+      'ury.ury_pos.api.getPosInvoiceItems',
+      {
+        invoice: invoiceId
+      }
+    );
+
+    return {
+      items: response.message[0],
+      taxes: response.message[1]
+    };
+  } catch (error) {
+    console.error('Error fetching POS invoice items:', error);
+    throw new Error('Failed to fetch POS invoice items');
   }
 }
 

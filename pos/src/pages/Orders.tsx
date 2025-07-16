@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, User, UserCheck, Receipt, Calendar } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
 import OrderStatusSidebar from '../components/OrderStatusSidebar';
 import { useRootStore } from '../store/root-store';
@@ -13,10 +13,17 @@ export default function Orders() {
     error,
     selectedStatus,
     pagination,
+    selectedOrder,
+    selectedOrderItems,
+    selectedOrderTaxes,
+    selectedOrderLoading,
+    selectedOrderError,
     fetchOrders,
     setSelectedStatus,
     goToNextPage,
-    goToPreviousPage
+    goToPreviousPage,
+    selectOrder,
+    clearSelectedOrder
   } = useRootStore();
 
   useEffect(() => {
@@ -35,6 +42,19 @@ export default function Orders() {
     return formattedDate;
   };
 
+  // Function to format just the date
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const handleOrderClick = (order: any) => {
+    selectOrder(order);
+  };
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -47,7 +67,7 @@ export default function Orders() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       {/* Left Sidebar - Order Types */}
       <OrderStatusSidebar
         selectedStatus={selectedStatus}
@@ -55,7 +75,7 @@ export default function Orders() {
       />
 
       {/* Middle Section - Order Cards */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden pr-96">
         <div className="flex-1 overflow-y-auto bg-gray-50 p-4 pb-20">
           {orderLoading ? (
             <div className="flex items-center justify-center h-full">
@@ -68,7 +88,13 @@ export default function Orders() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-screen-xl mx-auto">
               {orders.map((order) => (
-                <Card key={order.name} className="p-0 bg-white hover:shadow-md transition-shadow flex flex-col overflow-hidden">
+                <Card 
+                  key={order.name} 
+                  className={`p-0 bg-white hover:shadow-md transition-shadow flex flex-col overflow-hidden cursor-pointer ${
+                    selectedOrder?.name === order.name ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                  }`}
+                  onClick={() => handleOrderClick(order)}
+                >
                   <CardContent className="p-0 flex flex-col h-full">
                     <div className="p-3 bg-gray-50 border-b">
                     <h3 className="font-medium text-gray-900 text-sm truncate" title={order.name}>
@@ -143,11 +169,138 @@ export default function Orders() {
       </div>
 
       {/* Right Section - Order Details */}
-      <div className="w-96 bg-white border-l border-gray-200 p-6">
-        <div className="text-center h-full flex flex-col items-center justify-center text-gray-500">
-          <p className="text-lg font-medium mb-2">Select an order to view details</p>
-          <p className="text-sm">Click on any order card to view its details</p>
-        </div>
+      <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-10">
+        {!selectedOrder ? (
+          <div className="text-center h-full flex flex-col items-center justify-center text-gray-500 p-6">
+            <p className="text-lg font-medium mb-2">Select an order to view details</p>
+            <p className="text-sm">Click on any order card to view its details</p>
+          </div>
+        ) : selectedOrderLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Spinner />
+          </div>
+        ) : selectedOrderError ? (
+          <div className="text-center h-full flex flex-col items-center justify-center text-red-500 p-6">
+            <p className="text-lg font-medium mb-2">Failed to load order details</p>
+            <p className="text-sm">{selectedOrderError}</p>
+          </div>
+        ) : (
+          <>
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto p-6 pb-40">
+              {/* Order Header */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">{selectedOrder.name}</h2>
+                  <Badge variant={selectedOrder.status === 'Draft' ? 'secondary' : 'default'}>
+                    {selectedOrder.status}
+                  </Badge>
+                </div>
+                
+                {/* Order Info */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-900 font-medium">{selectedOrder.customer}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 text-sm">
+                    <UserCheck className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Waiter: {selectedOrder.waiter}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 text-sm">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">{formatDate(selectedOrder.posting_date)}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 text-sm">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">{formatDateTime(selectedOrder.posting_date, selectedOrder.posting_time)}</span>
+                  </div>
+                  
+                  {selectedOrder.restaurant_table && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <Receipt className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-600">Table: {selectedOrder.restaurant_table}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
+                <div className="space-y-3">
+                  {selectedOrderItems.map((item, index) => (
+                    <div key={index} className="flex justify-between items-start py-2 border-b border-gray-100">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{item.item_name}</p>
+                        <p className="text-xs text-gray-500">Qty: {item.qty}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {formatCurrency(item.amount)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Taxes */}
+              {selectedOrderTaxes.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Taxes & Charges</h3>
+                  <div className="space-y-2">
+                    {selectedOrderTaxes.map((tax, index) => (
+                      <div key={index} className="flex justify-between items-center py-1">
+                        <span className="text-sm text-gray-600">{tax.description}</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {formatCurrency(tax.rate)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sticky Bottom Section */}
+            <div className="border-t border-gray-200 p-6 bg-gray-50 sticky bottom-0 left-0 right-0 z-10">
+              {/* Total */}
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold text-gray-900">Total</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {formatCurrency(selectedOrder.grand_total)}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    // TODO: Implement edit functionality
+                    console.log('Edit order:', selectedOrder.name);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => {
+                    // TODO: Implement payment functionality
+                    console.log('Process payment for order:', selectedOrder.name);
+                  }}
+                >
+                  Payment
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

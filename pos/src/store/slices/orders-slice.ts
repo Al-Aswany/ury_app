@@ -2,7 +2,7 @@ import { StateCreator } from 'zustand';
 import { OrderType } from '../../data/order-types';
 import { Customer, OrderItem } from '../pos-store';
 import { call } from '../../lib/frappe-sdk';
-import { getPOSInvoices } from '../../lib/invoice-api';
+import { getPOSInvoices, getPOSInvoiceItems, POSInvoiceItem, POSInvoiceTax } from '../../lib/invoice-api';
 
 export interface POSInvoice {
   name: string;
@@ -32,6 +32,11 @@ export interface OrdersState {
     itemsPerPage: number;
   };
   selectedStatus: 'Draft' | 'Paid' | 'Cancelled';
+  selectedOrder: POSInvoice | null;
+  selectedOrderItems: POSInvoiceItem[];
+  selectedOrderTaxes: POSInvoiceTax[];
+  selectedOrderLoading: boolean;
+  selectedOrderError: string | null;
 }
 
 export interface OrdersActions {
@@ -40,6 +45,8 @@ export interface OrdersActions {
   goToNextPage: () => Promise<void>;
   goToPreviousPage: () => Promise<void>;
   setSelectedStatus: (status: POSInvoice['status']) => Promise<void>;
+  selectOrder: (order: POSInvoice) => Promise<void>;
+  clearSelectedOrder: () => void;
 }
 
 export type OrdersSlice = OrdersState & OrdersActions;
@@ -62,6 +69,11 @@ export const createOrdersSlice: StateCreator<
     itemsPerPage: ITEMS_PER_PAGE,
   },
   selectedStatus: 'Draft',
+  selectedOrder: null,
+  selectedOrderItems: [],
+  selectedOrderTaxes: [],
+  selectedOrderLoading: false,
+  selectedOrderError: null,
 
   // Actions
   fetchOrders: async (page = 1) => {
@@ -112,6 +124,38 @@ export const createOrdersSlice: StateCreator<
   setSelectedStatus: async (status) => {
     set({ selectedStatus: status });
     await get().fetchOrders(1); // Reset to first page when status changes
+  },
+
+  selectOrder: async (order) => {
+    try {
+      set({ 
+        selectedOrder: order,
+        selectedOrderLoading: true, 
+        selectedOrderError: null 
+      });
+
+      const { items, taxes } = await getPOSInvoiceItems(order.name);
+      
+      set({ 
+        selectedOrderItems: items,
+        selectedOrderTaxes: taxes,
+        selectedOrderLoading: false 
+      });
+    } catch (error) {
+      set({ 
+        selectedOrderError: error instanceof Error ? error.message : 'Failed to fetch order details',
+        selectedOrderLoading: false 
+      });
+    }
+  },
+
+  clearSelectedOrder: () => {
+    set({ 
+      selectedOrder: null,
+      selectedOrderItems: [],
+      selectedOrderTaxes: [],
+      selectedOrderError: null 
+    });
   },
 
   updateOrderStatus: async (orderId: string, status: POSInvoice['status']) => {
