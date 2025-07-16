@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Bell,
   Command,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Badge } from './ui';
 import { useRootStore } from '../store/root-store';
+import { usePOSStore } from '../store/pos-store';
 import type { RootState } from '../store/root-store';
 import { logout } from '../lib/auth-api';
 import { showToast } from './ui/toast';
@@ -27,6 +28,21 @@ const Header = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const user = useRootStore((state: RootState) => state.user);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
+  const { searchQuery, setSearchQuery } = usePOSStore();
+
+  // Determine placeholder based on route
+  let searchPlaceholder = 'Search orders, menu items, or customers...';
+  let searchValue: string | undefined = undefined;
+  let searchOnChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | undefined = undefined;
+  if (location.pathname === '/orders') {
+    searchPlaceholder = 'Search Orders';
+  } else if (location.pathname === '/') {
+    searchPlaceholder = 'Search Menu';
+    searchValue = searchQuery;
+    searchOnChange = (e) => setSearchQuery(e.target.value);
+  }
 
   // Enhanced notification data with restaurant-specific alerts
   const notifications = [
@@ -132,6 +148,17 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleNotificationsToggle = () => {
     setShowUserMenu(false);
     setShowNotifications(!showNotifications);
@@ -191,23 +218,18 @@ const Header = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-2xl mx-8">
-          <Button
-            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-            variant="outline"
-            className="relative w-full flex items-center text-left bg-gray-50 hover:bg-gray-100"
-          >
+        <div className="px-4 py-2 flex-1 flex items-center max-w-2xl mx-8  bg-gray-50 hover:bg-gray-100 border border-input rounded-md">
             <Input
-              readOnly
-              placeholder="Search orders, menu items, or customers..."
-              className="w-full bg-transparent border-0 focus:outline-none cursor-pointer focus-visible:ring-0 focus-visible:ring-offset-0"
-              onClick={(e) => e.preventDefault()}
+              ref={searchInputRef}
+              placeholder={searchPlaceholder}
+              className="h-fit p-0 w-full bg-transparent border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              value={searchValue}
+              onChange={searchOnChange}
             />
             <div className="flex items-center gap-2 text-gray-400">
               <Command className="w-4 h-4" />
               <span>K</span>
             </div>
-          </Button>
         </div>
 
         {/* Right side actions */}

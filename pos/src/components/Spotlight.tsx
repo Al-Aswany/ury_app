@@ -1,3 +1,4 @@
+//Not currently used, will update later
 import { useState, useEffect, useRef } from 'react';
 import { Search, Command, X } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
@@ -128,5 +129,4 @@ const Spotlight = () => {
     </Dialog>
   );
 };
-
 export default Spotlight; 

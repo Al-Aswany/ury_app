@@ -126,13 +126,13 @@ export default function POS() {
         <div className="p-4 bg-white border-b border-gray-200">
           <div className="max-w-screen-xl mx-auto space-y-3">
             <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
-              <SearchBar
+              {/* <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
                 onVisibilityChange={setShowSearch}
                 isVisible={showSearch}
                 disabled={isMenuInteractionDisabled()}
-              />
+              /> */}
               
               <QuickFilterButton filter="all" icon={Star} label="All" />
               <QuickFilterButton filter="special" icon={TrendingUp} label="Special Items" />
