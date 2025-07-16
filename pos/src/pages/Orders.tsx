@@ -11,6 +11,7 @@ import { Spinner } from '../components/ui/spinner';
 import { Textarea } from '../components/ui/textarea';
 import { usePOSStore } from '../store/pos-store';
 import { useNavigate } from 'react-router-dom';
+import PaymentDialog from '../components/PaymentDialog';
 
 export default function Orders() {
   const { 
@@ -40,6 +41,7 @@ export default function Orders() {
   const [cancelReason, setCancelReason] = React.useState('');
   const [cancelLoading, setCancelLoading] = React.useState(false);
   const [editLoading, setEditLoading] = React.useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -223,7 +225,7 @@ export default function Orders() {
                       {/* Total - pushed to bottom like MenuCard */}
                       <div className="mt-auto pt-2">
                         <span className="text-sm font-semibold text-gray-900 tabular-nums">
-                          {formatCurrency(order.grand_total)}
+                          {formatCurrency(order.rounded_total)}
                         </span>
                       </div>
                     </div>
@@ -428,22 +430,26 @@ export default function Orders() {
                 {/* Payment Button */}
                 <Button
                   className="flex-1"
-                  onClick={() => {
-                    // TODO: Implement payment functionality
-                    console.log('Process payment for order:', selectedOrder.name);
-                  }}
+                  onClick={() => setShowPaymentDialog(true)}
                 >
                   Payment
                 </Button>
                 {/* Total */}
                 <span className="ml-auto text-xl font-bold text-gray-900 whitespace-nowrap">
-                  {formatCurrency(selectedOrder.grand_total)}
+                  {formatCurrency(selectedOrder.rounded_total)}
                 </span>
               </div>
             </div>
           </>
         )}
       </div>
+      {showPaymentDialog && selectedOrder && (
+        <PaymentDialog
+          onClose={() => setShowPaymentDialog(false)}
+          grandTotal={selectedOrder.grand_total}
+          roundedTotal={selectedOrder.rounded_total}
+        />
+      )}
     </div>
   );
 };
