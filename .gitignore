@@ -5,3 +5,6 @@
 tags
 ury/docs/current
 node_modules/
+
+ury/public/pos
+ury/www/pos.html

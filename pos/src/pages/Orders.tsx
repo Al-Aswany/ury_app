@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Clock, User, UserCheck, Receipt, Calendar } from 'lucide-react';
+import { Clock, User, UserCheck, Receipt, Calendar, Printer } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
 import OrderStatusSidebar from '../components/OrderStatusSidebar';
 import { useRootStore } from '../store/root-store';
@@ -196,35 +196,32 @@ export default function Orders() {
                     {selectedOrder.status}
                   </Badge>
                 </div>
-                
-                {/* Order Info */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-sm">
-                    <User className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900 font-medium">{selectedOrder.customer}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 text-sm">
-                    <UserCheck className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Waiter: {selectedOrder.waiter}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{formatDate(selectedOrder.posting_date)}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 text-sm">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{formatDateTime(selectedOrder.posting_date, selectedOrder.posting_time)}</span>
-                  </div>
-                  
-                  {selectedOrder.restaurant_table && (
+                {/* Two-column Order Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* First column: customer and time */}
+                  <div className="space-y-3">
                     <div className="flex items-center gap-3 text-sm">
-                      <Receipt className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-600">Table: {selectedOrder.restaurant_table}</span>
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-900 font-medium">{selectedOrder.customer}</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-3 text-sm">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-600">{formatDateTime(selectedOrder.posting_date, selectedOrder.posting_time)}</span>
+                    </div>
+                  </div>
+                  {/* Second column: waiter and table */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <UserCheck className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-600">{selectedOrder.waiter}</span>
+                    </div>
+                    {selectedOrder.restaurant_table && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <Receipt className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600">{selectedOrder.restaurant_table}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -266,29 +263,24 @@ export default function Orders() {
               )}
             </div>
 
-            {/* Sticky Bottom Section */}
+            {/* Sticky Bottom Section - Single Row: Print | Payment | Total */}
             <div className="border-t border-gray-200 p-6 bg-gray-50 sticky bottom-0 left-0 right-0 z-10">
-              {/* Total */}
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold text-gray-900">Total</span>
-                <span className="text-xl font-bold text-gray-900">
-                  {formatCurrency(selectedOrder.grand_total)}
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
+              <div className="flex items-center gap-3 w-full">
+                {/* Print Icon Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="flex-shrink-0"
                   onClick={() => {
-                    // TODO: Implement edit functionality
-                    console.log('Edit order:', selectedOrder.name);
+                    // TODO: Implement print functionality
+                    console.log('Print order:', selectedOrder.name);
                   }}
+                  aria-label="Print"
                 >
-                  Edit
+                  <Printer className="w-5 h-5" />
                 </Button>
-                <Button 
+                {/* Payment Button */}
+                <Button
                   className="flex-1"
                   onClick={() => {
                     // TODO: Implement payment functionality
@@ -297,6 +289,10 @@ export default function Orders() {
                 >
                   Payment
                 </Button>
+                {/* Total */}
+                <span className="ml-auto text-xl font-bold text-gray-900 whitespace-nowrap">
+                  {formatCurrency(selectedOrder.grand_total)}
+                </span>
               </div>
             </div>
           </>
