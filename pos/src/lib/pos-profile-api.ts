@@ -62,6 +62,7 @@ export interface PosProfileFull {
   branch: string;
   currency: string;
   role_allowed_for_billing: RolePermission[];
+  role_restricted_for_table_order?: RolePermission[];
   paid_limit?: number;
 }
 

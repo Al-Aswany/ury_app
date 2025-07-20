@@ -1,20 +1,31 @@
 import { useState } from 'react';
 import { usePOSStore } from '../store/pos-store';
+import { useRootStore } from '../store/root-store';
 import { cn } from '../lib/utils';
 import { Button } from './ui';
 import TableSelectionDialog from './TableSelectionDialog';
 import { DINE_IN, ORDER_TYPES , type OrderType} from '../data/order-types';
 import { HandPlatter } from 'lucide-react';
+import { isUserRestrictedFromTableOrders } from '../lib/role-utils';
 
 interface OrderTypeSelectProps {
   disabled?: boolean;
 }
 
 const OrderTypeSelect = ({ disabled }: OrderTypeSelectProps) => {
-  const { selectedOrderType, setSelectedOrderType, selectedTable } = usePOSStore();
+  const { selectedOrderType, setSelectedOrderType, selectedTable, posProfile } = usePOSStore();
+  const { user } = useRootStore();
   const [showTableDialog, setShowTableDialog] = useState(false);
 
+  // Check if user is restricted from table orders
+  const isRestrictedFromTableOrders = isUserRestrictedFromTableOrders(user, posProfile);
+
   const handleOrderTypeSelect = (type: OrderType) => {
+    // Prevent selecting "Dine In" if user is restricted
+    if (type === DINE_IN && isRestrictedFromTableOrders) {
+      return;
+    }
+    
     setSelectedOrderType(type);
     if (type === DINE_IN) {
       setShowTableDialog(true);
@@ -25,6 +36,9 @@ const OrderTypeSelect = ({ disabled }: OrderTypeSelectProps) => {
     <div>
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
         {ORDER_TYPES.map(({ label, value, icon: Icon }) => {
+          const isDineIn = value === DINE_IN;
+          const isDisabled = disabled || (isDineIn && isRestrictedFromTableOrders);
+          
           return (
             <Button
               key={value}
@@ -35,9 +49,10 @@ const OrderTypeSelect = ({ disabled }: OrderTypeSelectProps) => {
                 selectedOrderType === value
                 ? 'text-primary-700 bg-primary-50 border-primary-600 hover:bg-primary-50'
                 : 'text-gray-700 border-gray-200 hover:bg-gray-50',
-                disabled && 'opacity-50 cursor-not-allowed'
+                isDisabled && 'opacity-50 cursor-not-allowed'
               )}
-              disabled={disabled}
+              disabled={isDisabled}
+              title={isDineIn && isRestrictedFromTableOrders ? 'Dine In is not available for your role' : undefined}
             >
               <Icon className="w-4 h-4" />
               {label}
