@@ -19,7 +19,7 @@ const OrderStatusSidebar = ({
   const { posProfile } = usePOSStore();
   
   // Get the appropriate status types based on POS profile settings
-  const statusTypes = getOrderStatusTypes(posProfile?.view_all_status);
+  const statusTypes = getOrderStatusTypes(posProfile?.view_all_status, posProfile?.paid_limit);
 
   return (
     <div className={cn(

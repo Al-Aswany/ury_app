@@ -15,7 +15,7 @@ export interface POSInvoice {
   posting_time: string;
   total_taxes_and_charges: number;
   customer: string;
-  status: 'Draft' | 'Unbilled' | 'Paid' | 'Consolidated' | 'Return';
+  status: 'Draft' | 'Unbilled' | 'Recently Paid' | 'Paid' | 'Consolidated' | 'Return';
   mobile_number: string;
   posting_date: string;
   rounded_total: number;
@@ -31,7 +31,7 @@ export interface OrdersState {
     hasNextPage: boolean;
     itemsPerPage: number;
   };
-  selectedStatus: 'Draft' | 'Unbilled' | 'Paid' | 'Consolidated' | 'Return';
+  selectedStatus: 'Draft' | 'Unbilled' | 'Recently Paid' | 'Paid' | 'Consolidated' | 'Return';
   selectedOrder: POSInvoice | null;
   selectedOrderItems: POSInvoiceItem[];
   selectedOrderTaxes: POSInvoiceTax[];
@@ -83,6 +83,12 @@ export const createOrdersSlice: StateCreator<
     try {
       set({ orderLoading: true, error: null });
       const { orderSearchQuery, selectedStatus } = get();
+      
+      // Get POS profile to access paid_limit
+      const posProfile = sessionStorage.getItem('posProfile');
+      const profile = posProfile ? JSON.parse(posProfile) : null;
+      const paidLimit = profile?.paid_limit;
+      
       if (orderSearchQuery && orderSearchQuery.trim()) {
         // Use search API
         const res = await searchPosInvoice(orderSearchQuery, selectedStatus);
@@ -104,6 +110,7 @@ export const createOrdersSlice: StateCreator<
         status,
         limit: ITEMS_PER_PAGE,
         limit_start: limitStart,
+        paid_limit: paidLimit
       });
       set({ 
         orders: invoices,

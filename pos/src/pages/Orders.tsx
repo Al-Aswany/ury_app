@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Clock, User, UserCheck, Receipt, Calendar, Printer, Pencil, X } from 'lucide-react';
+import { Clock, User, UserCheck, Receipt, Printer, Pencil, X } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
-import { Input } from '../components/ui/input';
 import { showToast } from '../components/ui/toast';
 import OrderStatusSidebar from '../components/OrderStatusSidebar';
 import { useRootStore } from '../store/root-store';
@@ -80,6 +79,23 @@ export default function Orders() {
 
   const handleOrderClick = (order: any) => {
     selectOrder(order);
+  };
+
+  // Helper function to get badge variant based on order status
+  const getBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'Draft':
+      case 'Unbilled':
+        return 'secondary';
+      case 'Recently Paid':
+      case 'Paid':
+      case 'Consolidated':
+        return 'default';
+      case 'Return':
+        return 'destructive';
+      default:
+        return 'default';
+    }
   };
 
   async function handleCancelOrder() {
@@ -205,7 +221,7 @@ export default function Orders() {
                           {order.restaurant_table ? `Table ${order.restaurant_table} • ` : ''}{order.order_type}
                         </p>
                       </div>
-                      <Badge variant={order.status === 'Draft' ? 'secondary' : 'default'} className="ml-2">
+                      <Badge variant={getBadgeVariant(order.status)} className="ml-2">
                         {order.status}
                       </Badge>
                     </div>
@@ -289,25 +305,30 @@ export default function Orders() {
             <div className="sticky top-0 left-0 right-0 z-20 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between min-h-[64px]">
               <h2 className="text-xl font-semibold text-gray-900 truncate max-w-[10rem]">{selectedOrder.name}</h2>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Edit order"
-                  onClick={handleEditOrder}
-                  disabled={editLoading}
-                >
-                  <Pencil className="w-4 h-4" />
-                  {editLoading && <span className="ml-2 text-xs">Loading...</span>}
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                  aria-label="Cancel order"
-                  onClick={() => setCancelDialogOpen(true)}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <Badge variant={selectedOrder.status === 'Draft' ? 'secondary' : 'default'}>
+                {/* Only show edit and cancel buttons for Draft, Unbilled, and Recently Paid orders */}
+                {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Unbilled' || selectedOrder.status === 'Recently Paid') && (
+                  <>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Edit order"
+                      onClick={handleEditOrder}
+                      disabled={editLoading}
+                    >
+                      <Pencil className="w-4 h-4" />
+                      {editLoading && <span className="ml-2 text-xs">Loading...</span>}
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      aria-label="Cancel order"
+                      onClick={() => setCancelDialogOpen(true)}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+                <Badge variant={getBadgeVariant(selectedOrder.status)}>
                   {selectedOrder.status}
                 </Badge>
               </div>
@@ -427,13 +448,15 @@ export default function Orders() {
                 >
                   <Printer className="w-5 h-5" />
                 </Button>
-                {/* Payment Button */}
-                <Button
-                  className="flex-1"
-                  onClick={() => setShowPaymentDialog(true)}
-                >
-                  Payment
-                </Button>
+                {/* Payment Button - Only show for Draft, Unbilled, and Recently Paid orders */}
+                {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Unbilled' || selectedOrder.status === 'Recently Paid') && (
+                  <Button
+                    className="flex-1"
+                    onClick={() => setShowPaymentDialog(true)}
+                  >
+                    Payment
+                  </Button>
+                )}
                 {/* Total */}
                 <span className="ml-auto text-xl font-bold text-gray-900 whitespace-nowrap">
                   {formatCurrency(selectedOrder.rounded_total)}

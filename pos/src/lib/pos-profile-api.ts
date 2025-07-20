@@ -62,6 +62,7 @@ export interface PosProfileFull {
   branch: string;
   currency: string;
   role_allowed_for_billing: RolePermission[];
+  paid_limit?: number;
 }
 
 // Combined POS Profile with both limited and full fields

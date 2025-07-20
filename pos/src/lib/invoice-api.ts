@@ -12,7 +12,7 @@ export interface POSInvoice {
   posting_time: string;
   total_taxes_and_charges: number;
   customer: string;
-  status: 'Draft' | 'Unbilled' | 'Paid' | 'Consolidated' | 'Return';
+  status: 'Draft' | 'Unbilled' | 'Recently Paid' | 'Paid' | 'Consolidated' | 'Return';
   mobile_number: string;
   posting_date: string;
   rounded_total: number;
@@ -41,6 +41,7 @@ interface GetPOSInvoicesParams {
   status: POSInvoice['status'];
   limit?: number;
   limit_start?: number;
+  paid_limit?: number;
 }
 
 interface GetPOSInvoiceItemsResponse {
@@ -50,14 +51,18 @@ interface GetPOSInvoiceItemsResponse {
 export async function getPOSInvoices({ 
   status, 
   limit, 
-  limit_start
+  limit_start,
+  paid_limit
 }: GetPOSInvoicesParams) {
   try {
+    // Use paid_limit as the limit for Recently Paid status
+    const actualLimit = status === 'Recently Paid' && paid_limit ? paid_limit : limit;
+    
     const response = await call.get<GetPOSInvoicesResponse>(
       'ury.ury_pos.api.getPosInvoice',
       {
         status,
-        limit,
+        limit: actualLimit,
         limit_start
       }
     );

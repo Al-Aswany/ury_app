@@ -39,7 +39,7 @@ export const ORDER_TYPES: OrderTypes[] = [
 export const DINE_IN="Dine In"
 export const DEFAULT_ORDER_TYPE="Take Away"
 
-export type OrderStatusType = "Draft" | "Unbilled" | "Paid" | "Consolidated" | "Return";
+export type OrderStatusType = "Draft" | "Unbilled" | "Recently Paid" | "Paid" | "Consolidated" | "Return";
 
 // Base status types that are always available
 export const BASE_ORDER_STATUS_TYPES = [
@@ -50,6 +50,14 @@ export const BASE_ORDER_STATUS_TYPES = [
     {
         label: "Unbilled",
         value: "Unbilled"
+    }
+];
+
+// Recently Paid status that appears when paid_limit > 0
+export const RECENTLY_PAID_STATUS_TYPE = [
+    {
+        label: "Recently Paid",
+        value: "Recently Paid"
     }
 ];
 
@@ -70,11 +78,20 @@ export const EXTENDED_ORDER_STATUS_TYPES = [
 ];
 
 // Function to get order status types based on POS profile settings
-export const getOrderStatusTypes = (viewAllStatus?: number) => {
-    if (viewAllStatus === 1) {
-        return [...BASE_ORDER_STATUS_TYPES, ...EXTENDED_ORDER_STATUS_TYPES];
+export const getOrderStatusTypes = (viewAllStatus?: number, paidLimit?: number) => {
+    let statusTypes = [...BASE_ORDER_STATUS_TYPES];
+    
+    // Add Recently Paid if paid_limit > 0
+    if (paidLimit && paidLimit > 0) {
+        statusTypes.push(...RECENTLY_PAID_STATUS_TYPE);
     }
-    return BASE_ORDER_STATUS_TYPES;
+    
+    // Add extended statuses if view_all_status is enabled
+    if (viewAllStatus === 1) {
+        statusTypes.push(...EXTENDED_ORDER_STATUS_TYPES);
+    }
+    
+    return statusTypes;
 };
 
 // Legacy export for backward compatibility
