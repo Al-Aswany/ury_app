@@ -68,15 +68,6 @@ export default function Orders() {
     return formattedDate;
   };
 
-  // Function to format just the date
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   const handleOrderClick = (order: any) => {
     selectOrder(order);
   };

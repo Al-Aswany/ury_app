@@ -145,6 +145,8 @@ export const createOrdersSlice: StateCreator<
 
   setSelectedStatus: async (status) => {
     set({ selectedStatus: status });
+    // Clear selected order when status changes
+    get().clearSelectedOrder();
     await get().fetchOrders(1); // Reset to first page when status changes
   },
 
