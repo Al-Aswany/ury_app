@@ -1,28 +1,40 @@
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from './ui';
 
 interface POSOpeningDialogProps {
   onReload: () => void;
+  type: 'opening' | 'closing';
 }
 
-const POSOpeningDialog = ({ onReload }: POSOpeningDialogProps) => {
+const POSOpeningDialog = ({ onReload, type }: POSOpeningDialogProps) => {
+  const isOpeningIssue = type === 'opening';
+  
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
         <div className="text-center">
           {/* Icon */}
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
-            <RefreshCw className="h-8 w-8 text-red-600" />
+          <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6 ${
+            isOpeningIssue ? 'bg-red-100' : 'bg-orange-100'
+          }`}>
+            {isOpeningIssue ? (
+              <RefreshCw className="h-8 w-8 text-red-600" />
+            ) : (
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+            )}
           </div>
           
           {/* Title */}
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            POS Not Opened
+            {isOpeningIssue ? 'POS Not Opened' : 'Previous POS Not Closed'}
           </h2>
           
           {/* Message */}
           <p className="text-gray-600 mb-8 text-lg">
-            Please open POS Entry to continue using the system.
+            {isOpeningIssue 
+              ? 'Please open POS Entry to continue using the system.'
+              : 'Please close the previous POS Entry to continue.'
+            }
           </p>
           
           {/* Reload Button */}
