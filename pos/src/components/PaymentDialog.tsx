@@ -15,6 +15,8 @@ interface PaymentDialogProps {
   table: string | null;
   cashier: string;
   owner: string;
+  fetchOrders: () => Promise<void>;
+  clearSelectedOrder: () => void;
 }
 
 const PaymentDialog: React.FC<PaymentDialogProps> = ({
@@ -26,7 +28,9 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   posProfile,
   table,
   cashier,
-  owner
+  owner,
+  fetchOrders,
+  clearSelectedOrder
 }) => {
   const { paymentModes, fetchPaymentModes, posProfile: storePosProfile } = usePOSStore();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -116,9 +120,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         (window as any).showToast.success('Payment successful');
       }
       onClose();
-      if (typeof window !== 'undefined' && (window as any).location) {
-        window.location.reload();
-      }
+      clearSelectedOrder();
+      await fetchOrders();
     } catch (err) {
       setError((err as Error).message);
     } finally {

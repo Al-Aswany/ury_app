@@ -80,6 +80,7 @@ export interface PosProfileCombined extends PosProfileFull {
   enable_discount: number;
   multiple_cashier: number;
   edit_order_type?: number;
+  view_all_status?: number;
 }
 
 export interface Currency {

@@ -39,9 +39,10 @@ export const ORDER_TYPES: OrderTypes[] = [
 export const DINE_IN="Dine In"
 export const DEFAULT_ORDER_TYPE="Take Away"
 
-export type OrderStatusType = "Draft" | "Paid" | "Cancelled";
+export type OrderStatusType = "Draft" | "Unbilled" | "Paid" | "Consolidated" | "Return";
 
-export const ORDER_STATUS_TYPES = [
+// Base status types that are always available
+export const BASE_ORDER_STATUS_TYPES = [
     {
         label: "Draft",
         value: "Draft"
@@ -50,4 +51,31 @@ export const ORDER_STATUS_TYPES = [
         label: "Unbilled",
         value: "Unbilled"
     }
-]
+];
+
+// Extended status types that are only available when view_all_status is enabled
+export const EXTENDED_ORDER_STATUS_TYPES = [
+    {
+        label: "Paid",
+        value: "Paid"
+    },
+    {
+        label: "Consolidated",
+        value: "Consolidated"
+    },
+    {
+        label: "Return",
+        value: "Return"
+    }
+];
+
+// Function to get order status types based on POS profile settings
+export const getOrderStatusTypes = (viewAllStatus?: number) => {
+    if (viewAllStatus === 1) {
+        return [...BASE_ORDER_STATUS_TYPES, ...EXTENDED_ORDER_STATUS_TYPES];
+    }
+    return BASE_ORDER_STATUS_TYPES;
+};
+
+// Legacy export for backward compatibility
+export const ORDER_STATUS_TYPES = BASE_ORDER_STATUS_TYPES;

@@ -1,6 +1,5 @@
 import { StateCreator } from 'zustand';
 import { OrderType } from '../../data/order-types';
-import { Customer, OrderItem } from '../pos-store';
 import { call } from '../../lib/frappe-sdk';
 import { getPOSInvoices, getPOSInvoiceItems, POSInvoiceItem, POSInvoiceTax } from '../../lib/invoice-api';
 import { searchPosInvoice } from '../../lib/invoice-api';
@@ -16,7 +15,7 @@ export interface POSInvoice {
   posting_time: string;
   total_taxes_and_charges: number;
   customer: string;
-  status: 'Draft' | 'Paid' | 'Cancelled';
+  status: 'Draft' | 'Unbilled' | 'Paid' | 'Consolidated' | 'Return';
   mobile_number: string;
   posting_date: string;
   rounded_total: number;
@@ -32,7 +31,7 @@ export interface OrdersState {
     hasNextPage: boolean;
     itemsPerPage: number;
   };
-  selectedStatus: 'Draft' | 'Paid' | 'Cancelled';
+  selectedStatus: 'Draft' | 'Unbilled' | 'Paid' | 'Consolidated' | 'Return';
   selectedOrder: POSInvoice | null;
   selectedOrderItems: POSInvoiceItem[];
   selectedOrderTaxes: POSInvoiceTax[];

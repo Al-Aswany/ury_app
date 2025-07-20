@@ -454,6 +454,8 @@ export default function Orders() {
           table={selectedOrder.restaurant_table || null}
           cashier={posStore.posProfile?.cashier || ''}
           owner={posStore.posProfile?.cashier || ''}
+          fetchOrders={fetchOrders}
+          clearSelectedOrder={clearSelectedOrder}
         />
       )}
     </div>

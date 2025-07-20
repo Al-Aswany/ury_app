@@ -1,7 +1,8 @@
 import { FileText } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Button, Badge } from './ui';
-import { ORDER_STATUS_TYPES, OrderStatusType } from '../data/order-types';
+import { Button } from './ui';
+import { getOrderStatusTypes, OrderStatusType } from '../data/order-types';
+import { usePOSStore } from '../store/pos-store';
 
 interface OrderStatusSidebarProps {
   disabled?: boolean;
@@ -15,6 +16,11 @@ const OrderStatusSidebar = ({
   selectedStatus,
   setSelectedStatus,
 }: OrderStatusSidebarProps) => {
+  const { posProfile } = usePOSStore();
+  
+  // Get the appropriate status types based on POS profile settings
+  const statusTypes = getOrderStatusTypes(posProfile?.view_all_status);
+
   return (
     <div className={cn(
       "w-64 bg-white border-r border-gray-200 h-full flex flex-col",
@@ -29,7 +35,7 @@ const OrderStatusSidebar = ({
 
           {/* Status Items */}
           <div className="space-y-1">
-            {ORDER_STATUS_TYPES.map((status) => (
+            {statusTypes.map((status) => (
               <Button
                 key={status.value}
                 onClick={() => setSelectedStatus(status.value as OrderStatusType)}

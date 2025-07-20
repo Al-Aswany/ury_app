@@ -12,7 +12,7 @@ export interface POSInvoice {
   posting_time: string;
   total_taxes_and_charges: number;
   customer: string;
-  status: 'Draft' | 'Paid' | 'Cancelled';
+  status: 'Draft' | 'Unbilled' | 'Paid' | 'Consolidated' | 'Return';
   mobile_number: string;
   posting_date: string;
   rounded_total: number;
