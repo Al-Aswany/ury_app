@@ -8,7 +8,6 @@ import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 import { getTableOrder, TableOrder } from '../lib/order-api';
 import { getPaymentModes } from '../lib/payment-api';
-import { call } from '../lib/frappe-sdk';
 
 // Constants
 const MAX_QUANTITY = 99;
@@ -115,6 +114,7 @@ interface POSState {
   territories: string[];
   tableOrder: TableOrder | null;
   isInitializing: boolean;
+  orderComment: string;
 }
 
 interface POSStore extends POSState {
@@ -153,6 +153,7 @@ interface POSStore extends POSState {
   setOrderForUpdate: (orderId: string | null) => void;
   resetOrderState: () => void;
   setSelectedAggregator: (aggregator: Aggregator | null) => void;
+  setOrderComment: (comment: string) => void;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -197,6 +198,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   isInitializing: true,
   isUpdatingOrder: false,
   orderId: null,
+  orderComment: '',
 
   initializeApp: async () => {
     try {
@@ -469,6 +471,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   setQuickFilter: (filter) => set({ quickFilter: filter }),
   setSelectedItem: (item) => set({ selectedItem: item }),
   setSelectedAggregator: (aggregator) => set({ selectedAggregator: aggregator }),
+  setOrderComment: (comment: string) => set({ orderComment: comment }),
 
   processPayment: async (paymentMode: string, amount: number) => {
     try {
@@ -666,7 +669,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       orderLoading: false,
       menuItems: [],
       error: null,
-      selectedOrderType: DEFAULT_ORDER_TYPE
+      selectedOrderType: DEFAULT_ORDER_TYPE,
+      orderComment: '',
     });
 
     fetchMenuItems();

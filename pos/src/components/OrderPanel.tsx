@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Trash2, Edit, FrownIcon, Plus, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, Edit, FrownIcon, Plus, Loader2, MessageSquare } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { formatCurrency, cn } from '../lib/utils';
 import { CustomerSelect } from './CustomerSelect';
 import ProductDialog from './ProductDialog';
 import OrderTypeSelect from './OrderTypeSelect';
+import CommentDialog from './CommentDialog';
 import { Button } from './ui/button';
 import { Spinner } from './ui/spinner';
 import { syncOrder } from '../lib/order-api';
@@ -31,11 +32,14 @@ const OrderPanel = () => {
     selectedAggregator,
     resetOrderState,
     paymentModes,
-    orderId
+    orderId,
+    orderComment,
+    setOrderComment
   } = usePOSStore();
   const user = useRootStore((state: RootState) => state.user);
   const [editingItem, setEditingItem] = useState<typeof activeOrders[0] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCommentDialog, setShowCommentDialog] = useState(false);
 
   const calculateItemTotal = (item: typeof activeOrders[0]) => {
     const basePrice = item.selectedVariant?.price || item.price;
@@ -56,6 +60,10 @@ const OrderPanel = () => {
     };
     setSelectedItem(menuItem);
     setEditingItem(item);
+  };
+
+  const handleCommentSave = (comment: string) => {
+    setOrderComment(comment);
   };
 
   const handleSubmit = async () => {
@@ -106,7 +114,8 @@ const OrderPanel = () => {
         mode_of_payment: paymentModes[0],
         last_invoice: isUpdatingOrder ? orderId : null,
         invoice: isUpdatingOrder ? orderId : null,
-        waiter: user.name
+        waiter: user.name,
+        comments: orderComment || undefined
       };
 
       await syncOrder(orderData);
@@ -260,8 +269,23 @@ const OrderPanel = () => {
           </div>
           
           <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-white">
-            <div className="flex justify-between mb-4">
-              <span className="text-lg font-semibold">Total</span>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setShowCommentDialog(true)}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-8 w-8 p-0",
+                    orderComment ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+                  )}
+                  disabled={isInteractionDisabled}
+                  title={orderComment ? "Edit comment" : "Add comment"}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </Button>
+                <span className="text-lg font-semibold">Total</span>
+              </div>
               <span className="text-lg font-semibold">{formatCurrency(total)}</span>
             </div>
             <Button
@@ -299,6 +323,13 @@ const OrderPanel = () => {
           itemToReplace={editingItem}
         />
       )}
+
+      <CommentDialog
+        isOpen={showCommentDialog}
+        onClose={() => setShowCommentDialog(false)}
+        onSave={handleCommentSave}
+        initialComment={orderComment}
+      />
     </div>
   );
 };

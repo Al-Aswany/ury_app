@@ -1,17 +1,21 @@
 import { 
   Cookie,
   Grid3X3,
+  MessageSquare,
 } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button, Badge } from './ui';
+import CommentDialog from './CommentDialog';
+import { useState } from 'react';
 
 interface SidebarProps {
   disabled?: boolean;
 }
 
 const Sidebar = ({ disabled }: SidebarProps) => {
-  const { selectedCategory, setSelectedCategory, menuItems, categories } = usePOSStore();
+  const { selectedCategory, setSelectedCategory, menuItems, categories, orderComment, setOrderComment } = usePOSStore();
+  const [showCommentDialog, setShowCommentDialog] = useState(false);
 
   // Count items per category
   const getCategoryCount = (category: string) => {
@@ -22,6 +26,10 @@ const Sidebar = ({ disabled }: SidebarProps) => {
   const getAllItemsCount = () => {
     const count = menuItems.length;
     return count;
+  };
+
+  const handleCommentSave = (comment: string) => {
+    setOrderComment(comment);
   };
 
   return (
@@ -101,6 +109,14 @@ const Sidebar = ({ disabled }: SidebarProps) => {
           </div>
         </div>
       </nav>
+
+      {/* Comment Dialog is rendered from sidebar but triggered from order panel, to not mount it on every order panel render */}
+      <CommentDialog
+        isOpen={showCommentDialog}
+        onClose={() => setShowCommentDialog(false)}
+        onSave={handleCommentSave}
+        initialComment={orderComment}
+      />
     </div>
   );
 };
