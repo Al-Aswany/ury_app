@@ -584,9 +584,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
     try {
       set({ orderLoading: true, error: null });
       const response = await getTableOrder(table);
-      
-      if (response.message) {
-        const order = response.message;
+      const order = response.message;
+      if (order && order.name && order.items && order.items.length > 0) {
         const orderItems: OrderItem[] = order.items.map(item => ({
           id: item.item_code,
           name: item.item_name,
