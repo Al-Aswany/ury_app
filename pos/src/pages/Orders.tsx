@@ -172,6 +172,12 @@ export default function Orders() {
         posProfile: posStore.posProfile
       });
       showToast.success(`Printed Successfully`);
+      // If order was Unbilled, set to Draft and reload draft orders
+      if (selectedStatus === 'Unbilled') {
+        showToast.info('Order moved to Draft after printing.');
+        setSelectedStatus('Draft');
+        fetchOrders();
+      }
     } catch (err: any) {
       showToast.error('Print failed: ' + (err?.message || err));
     } finally {
@@ -459,7 +465,13 @@ export default function Orders() {
                 {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Unbilled' || selectedOrder.status === 'Recently Paid') && (
                   <Button
                     className="flex-1"
-                    onClick={() => setShowPaymentDialog(true)}
+                    onClick={() => {
+                      if (String(selectedOrder.invoice_printed) === '0') {
+                        showToast.error('Please print invoice before making payment');
+                        return;
+                      }
+                      setShowPaymentDialog(true);
+                    }}
                   >
                     Payment
                   </Button>

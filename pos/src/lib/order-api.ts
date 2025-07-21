@@ -71,10 +71,10 @@ export interface SyncOrderRequest {
   owner?: string;
   waiter?: string;
   pos_profile: string;
-  invoice?: string | null;
+  invoice: string | null;
   aggregator_id?: string | null;
   order_type: string;
-  last_invoice?: string | null;
+  last_invoice: string | null;
   comments?: string | null;
   room?: string;
 }
