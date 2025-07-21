@@ -11,6 +11,7 @@ import { Textarea } from '../components/ui/textarea';
 import { usePOSStore } from '../store/pos-store';
 import { useNavigate } from 'react-router-dom';
 import PaymentDialog from '../components/PaymentDialog';
+import { printOrder } from '../lib/print';
 
 export default function Orders() {
   const { 
@@ -41,6 +42,7 @@ export default function Orders() {
   const [cancelLoading, setCancelLoading] = React.useState(false);
   const [editLoading, setEditLoading] = React.useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
+  const [isPrinting, setIsPrinting] = React.useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -158,6 +160,22 @@ export default function Orders() {
       showToast.error(err instanceof Error ? err.message : 'Failed to edit order');
     } finally {
       setEditLoading(false);
+    }
+  }
+
+  async function handlePrintOrder() {
+    if (!selectedOrder || !posStore.posProfile) return;
+    setIsPrinting(true);
+    try {
+      await printOrder({
+        orderId: selectedOrder.name,
+        posProfile: posStore.posProfile
+      });
+      showToast.success(`Printed Successfully`);
+    } catch (err: any) {
+      showToast.error('Print failed: ' + (err?.message || err));
+    } finally {
+      setIsPrinting(false);
     }
   }
 
@@ -431,13 +449,11 @@ export default function Orders() {
                   variant="outline"
                   size="icon"
                   className="flex-shrink-0"
-                  onClick={() => {
-                    // TODO: Implement print functionality
-                    console.log('Print order:', selectedOrder.name);
-                  }}
+                  onClick={handlePrintOrder}
                   aria-label="Print"
+                  disabled={isPrinting}
                 >
-                  <Printer className="w-5 h-5" />
+                  {isPrinting ? <Spinner className="w-5 h-5" hideMessage /> : <Printer className="w-5 h-5" />}
                 </Button>
                 {/* Payment Button - Only show for Draft, Unbilled, and Recently Paid orders */}
                 {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Unbilled' || selectedOrder.status === 'Recently Paid') && (

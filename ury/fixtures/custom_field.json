@@ -4320,8 +4320,6 @@
   "width": null
  },
 {
-<<<<<<< HEAD
-=======
   "allow_in_quick_entry": 0,
   "allow_on_submit": 0,
   "bold": 0,
@@ -5328,7 +5326,6 @@
   "width": null
 },
 {
->>>>>>> combine
     "allow_in_quick_entry": 0,
     "allow_on_submit": 0,
     "bold": 0,
@@ -5343,11 +5340,7 @@
     "dt": "POS Profile",
     "fetch_from": null,
     "fetch_if_empty": 0,
-<<<<<<< HEAD
-    "fieldname": "custom_edit_order_type",
-=======
     "fieldname": "custom_enable_kot_reprint",
->>>>>>> combine
     "fieldtype": "Check",
     "hidden": 0,
     "hide_border": 0,
@@ -5359,17 +5352,6 @@
     "in_list_view": 0,
     "in_preview": 0,
     "in_standard_filter": 0,
-<<<<<<< HEAD
-    "insert_after": "custom_enable_discount",
-    "is_system_generated": 0,
-    "is_virtual": 0,
-    "label": " Enable Order Type Edit",
-    "length": 0,
-    "mandatory_depends_on": null,
-    "modified": "2025-04-11 15:08:20.399135",
-    "module": null,
-    "name": "POS Profile-custom_edit_order_type",
-=======
     "insert_after": "custom_column_break_wwq3q",
     "is_system_generated": 0,
     "is_virtual": 0,
@@ -5380,15 +5362,11 @@
     "modified": "2025-02-19 12:51:46.708745",
     "module": null,
     "name": "POS Profile-custom_enable_kot_reprint",
->>>>>>> combine
     "no_copy": 0,
     "non_negative": 0,
     "options": null,
     "permlevel": 0,
-<<<<<<< HEAD
-=======
     "placeholder": null,
->>>>>>> combine
     "precision": "",
     "print_hide": 0,
     "print_hide_if_no_value": 0,
@@ -5398,17 +5376,11 @@
     "report_hide": 0,
     "reqd": 0,
     "search_index": 0,
-<<<<<<< HEAD
-=======
     "show_dashboard": 0,
->>>>>>> combine
     "sort_options": 0,
     "translatable": 0,
     "unique": 0,
     "width": null
-<<<<<<< HEAD
-}
-=======
   },
   {
     "allow_in_quick_entry": 0,
@@ -5746,5 +5718,4 @@
   "unique": 0,
   "width": null
   }
->>>>>>> combine
 ]

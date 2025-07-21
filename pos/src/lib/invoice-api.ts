@@ -123,3 +123,49 @@ export async function searchPosInvoice(query: string, status: string) {
     throw error;
   }
 } 
+
+export async function getInvoicePrintHtml(invoiceId: string, printFormat: string) {
+  try {
+    const response = await call.get<{ message: { html: string } }>(
+      'frappe.www.printview.get_html_and_style',
+      {
+        doc: 'POS Invoice',
+        name: invoiceId,
+        print_format: printFormat,
+        _lang: 'en',
+      }
+    );
+    return response.message.html;
+  } catch (error) {
+    console.error('Error fetching invoice print HTML:', error);
+    throw new Error('Failed to fetch invoice print HTML');
+  }
+} 
+
+export async function networkPrint(orderId: string, printer: string, printFormat: string) {
+  await call.post('ury.ury.api.ury_print.network_printing', {
+    doctype: 'POS Invoice',
+    name: orderId,
+    printer_setting: printer,
+    print_format: printFormat,
+  });
+}
+
+export async function selectNetworkPrinter(orderId: string, posProfile: string) {
+  await call.post('ury.ury.api.ury_print.select_network_printer', {
+    invoice_id: orderId,
+    pos_profile: posProfile,
+  });
+}
+
+export async function printPosPage(orderId: string, printFormat: string) {
+  await call.post('ury.ury.api.ury_print.print_pos_page', {
+    doctype: 'POS Invoice',
+    name: orderId,
+    print_format: printFormat,
+  });
+}
+
+export async function updatePrintStatus(orderId: string) {
+  await call.post('ury.ury.api.ury_print.qz_print_update', { invoice: orderId });
+} 
