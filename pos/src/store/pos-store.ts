@@ -586,23 +586,28 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const response = await getTableOrder(table);
       const order = response.message;
       if (order && order.name && order.items && order.items.length > 0) {
-        const orderItems: OrderItem[] = order.items.map(item => ({
-          id: item.item_code,
-          name: item.item_name,
-          price: item.rate,
-          quantity: item.qty,
-          amount: item.amount,
-          image: item.image || null,
-          uniqueId: uuidv4(),
-          item: item.item_code,
-          item_name: item.item_name,
-          item_image: null,
-          item_imgae: null,
-          course: '',
-          description: item.description || '',
-          special_dish: 0,
-          tax_rate: 0,
-        }));
+        const orderItems: OrderItem[] = order.items.map(item => {
+          const orderItem = {
+            id: item.item_code,
+            name: item.item_name,
+            price: item.rate,
+            quantity: item.qty,
+            amount: item.amount,
+            image: item.image || null,
+            item: item.item_code,
+            item_name: item.item_name,
+            item_image: null,
+            item_imgae: null,
+            course: '',
+            description: item.description || '',
+            special_dish: 0 as 0 | 1,
+            tax_rate: 0,
+          };
+          return {
+            ...orderItem,
+            uniqueId: generateUniqueId(orderItem as OrderItem)
+          } as OrderItem;
+        });
 
         set({ 
           tableOrder: response,
