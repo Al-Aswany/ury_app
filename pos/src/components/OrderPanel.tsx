@@ -125,7 +125,20 @@ const OrderPanel = () => {
       showToast.success(isUpdatingOrder ? 'Order updated successfully' : 'Order created successfully');
     } catch (error) {
       console.error('Failed to sync order:', error);
-      showToast.error(error instanceof Error ? error.message : 'Failed to process order');
+      // Frappe API error handling
+      if (error && typeof error === 'object' && '_server_messages' in error && typeof (error as any)._server_messages === 'string') {
+        try {
+          const messages = JSON.parse((error as any)._server_messages);
+          const messageObj = JSON.parse(messages[0]);
+          showToast.error(messageObj.message || 'API error');
+        } catch {
+          showToast.error('API error');
+        }
+      } else if (error instanceof Error) {
+        showToast.error(error.message);
+      } else {
+        showToast.error('Failed to process order');
+      }
     } finally {
       setIsSubmitting(false);
     }
