@@ -18,6 +18,7 @@ app_include_js = [
     "/assets/ury/js/quick_entry.js",
     "/assets/ury/js/pos_print.js",
     "/assets/ury/js/restrict_qty_edit_pos.js",
+    "/assets/ury/js/ury_pos_kot.js"
 ]
 
 # include js, css files in header of web template
@@ -45,8 +46,9 @@ website_context = {"splash_image": "/assets/ury/Images/ury-logo.jpg"}
 
 website_route_rules = [
     {"from_route": "/pos/<path:app_path>", "to_route": "pos"},
+    {"from_route": "/urypos/<path:app_path>", "to_route": "urypos"},
+    {"from_route": "/URYMosaic/<path:app_path>", "to_route": "URYMosaic"},
 ]
-
 # Home Pages
 # ----------
 
@@ -119,6 +121,7 @@ doc_events = {
     "POS Invoice": {
         "before_insert": "ury.ury.hooks.ury_pos_invoice.before_insert",
         "validate": "ury.ury.hooks.ury_pos_invoice.validate",
+        "after_insert":"ury.ury.api.ury_kot_order_number.set_order_number",
         "before_submit": "ury.ury.hooks.ury_pos_invoice.before_submit",
         "on_cancel": "ury.ury.hooks.ury_pos_invoice.on_trash",
         "on_trash": "ury.ury.hooks.ury_pos_invoice.on_trash",
@@ -133,17 +136,26 @@ doc_events = {
     "POS Opening Entry": {
         "validate":"ury.ury.hooks.ury_pos_opening_entry.set_cashier_room",
         "before_save": "ury.ury.hooks.ury_pos_opening_entry.before_save",
+        "before_insert":"ury.ury.api.ury_kot_order_number.set_last_invoice_in_pos_open",
         },
     "POS Closing Entry": {
         "before_save": "ury.ury.hooks.ury_pos_closing_entry.before_save",
         "validate":"ury.ury.hooks.ury_pos_closing_entry.validate"
-        }    
+        },
+    "URY Menu Course": {
+		"validate": "ury.ury.api.ury_menu_course_validation.validate_priority",
+	}    
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron":{
+		"* * * * *":[
+			"ury.ury.api.ury_kot_validation.kotValidationThread"
+		]
+	}
 # 	"all": [
 # 		"ury.tasks.all"
 # 	],
@@ -159,7 +171,7 @@ doc_events = {
 # 	"monthly": [
 # 		"ury.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
@@ -318,7 +330,31 @@ fixtures = [
                     "POS Opening Entry-custom_rooms",
                     "POS Opening Entry-custom_sub_pos_close_entry",
                     "POS Closing Entry Detail-custom_closing_amount",
-                    "POS Profile-custom_edit_order_type"
+                    "POS Profile-custom_edit_order_type",
+                    "Printer Settings-kot_print_format_",
+                    "Printer Settings-kot",
+                    "POS Profile-kot_naming_series",
+                    "POS Profile-custom_kot_settings",
+                    "POS Profile-custom_kot_alert",
+                    "POS Profile-custom_kot_alert_sound",
+                    "POS Profile-custom_kot_warning_time",
+                    "POS Profile-custom_cl",
+                    "POS Profile-custom_notify_kot_delay",
+                    "POS Profile-custom_recipients",
+                    "URY Printer Settings-custom_block_takeaway_kot",
+                    "POS Opening Entry-custom_ury_last_invoice",
+                    "POS Opening Entry-custom_ury_last_aggregator_invoice",
+                    "POS Profile-custom_reset_order_number_daily",
+                    "POS Invoice-custom_ury_order_number",
+                    "URY Menu Course-custom_serving_priority",
+                    "URY Menu Course-custom_indicate_in_kds",
+                    "POS Profile-custom_enable_kot_reprint",
+                    "POS Profile-custom_parcel_order_printer",
+                    "POS Profile-custom_column_break_wwq3q",
+                    "POS Profile-custom_table_order_printer",
+                    "POS Profile-custom_reprint_kot_format",
+                    "Employee-payment_amount",
+                    "Employee-payment_type"
                 },
             ]
         ],
