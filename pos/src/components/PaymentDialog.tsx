@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Percent, Gift, Award, CreditCard, Wallet, QrCode, Coins } from 'lucide-react';
+import { X, Percent, Coins } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
-import { Button, Input, Select, SelectItem, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui';
-import { RadixSelect } from './ui/select';
+import { Button, Input, Dialog, DialogContent } from './ui';
 
 interface PaymentDialogProps {
   onClose: () => void;
@@ -35,7 +34,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const { paymentModes, fetchPaymentModes, posProfile: storePosProfile } = usePOSStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [discountType] = useState<'percentage'>('percentage'); // Only percentage now
   const [discountValue, setDiscountValue] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
   const [paymentInputs, setPaymentInputs] = useState<{ [mode: string]: string }>({});
@@ -60,20 +59,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       setError('Please enter a valid discount value');
       return;
     }
-    let calculatedDiscount = 0;
-    if (discountType === 'percentage') {
-      if (value > 100) {
-        setError('Percentage discount cannot exceed 100%');
-        return;
-      }
-      calculatedDiscount = (grandTotal * value) / 100;
-    } else {
-      if (value > grandTotal) {
-        setError('Discount cannot exceed total amount');
-        return;
-      }
-      calculatedDiscount = value;
+    if (value > 100) {
+      setError('Percentage discount cannot exceed 100%');
+      return;
     }
+    const calculatedDiscount = (grandTotal * value) / 100;
     setAppliedDiscount(calculatedDiscount);
     setError(null);
     setDiscountValue('');
@@ -116,21 +106,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     setIsProcessing(true);
     setError(null);
     try {
-      // Calculate additionalDiscount as percentage string
-      let additionalDiscount = '';
-      if (appliedDiscount > 0) {
-        if (discountType === 'percentage') {
-          additionalDiscount = discountValue || ((appliedDiscount / grandTotal) * 100).toFixed(2);
-        } else {
-          // Fixed discount: calculate percentage
-          additionalDiscount = ((appliedDiscount / grandTotal) * 100).toFixed(2);
-        }
-      }
       const res = await fetch('/api/method/ury.ury.doctype.ury_order.ury_order.make_invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          additionalDiscount,
+          additionalDiscount:appliedDiscount,
           cashier,
           customer,
           invoice,
@@ -180,20 +160,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 Apply Discount
               </h3>
               <div className="flex gap-2">
-                <Select
-                  value={discountType}
-                  onValueChange={(val) => setDiscountType(val as 'percentage' | 'fixed')}
-                  size="sm"
-                  className="w-24"
-                >
-                  <SelectItem value="percentage">Percentage</SelectItem>
-                  <SelectItem value="fixed">Fixed</SelectItem>
-                </Select>
                 <Input
                   type="number"
                   value={discountValue}
                   onChange={(e) => setDiscountValue(e.target.value)}
-                  placeholder={discountType === 'percentage' ? 'Enter %' : 'Enter amount'}
+                  placeholder={'Enter %'}
                   size="sm"
                   className="flex-1"
                 />
