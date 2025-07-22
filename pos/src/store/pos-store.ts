@@ -50,7 +50,7 @@ export interface OrderItem extends MenuItem {
   selectedVariant?: { id: string; name: string; price: number };
   selectedAddons?: { id: string; name: string; price: number }[];
   uniqueId?: string;
-  comments?: string;
+  comment?: string;
 }
 
 export interface PaymentMode {
@@ -380,6 +380,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       if (existingItemIndex !== -1) {
         const existingItem = get().activeOrders[existingItemIndex];
         const newQuantity = existingItem.quantity + item.quantity;
+        const newComment = existingItem?.comment || "" + item.comment || "";
 
         if (!get().validateQuantity(newQuantity)) {
           throw new CartError(`Cannot add item. Total quantity would exceed ${MAX_QUANTITY}`);
@@ -388,7 +389,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
         const newOrders = [...get().activeOrders];
         newOrders[existingItemIndex] = {
           ...existingItem,
-          quantity: newQuantity
+          quantity: newQuantity,
+          comment: newComment
         };
         
         set({ activeOrders: newOrders });

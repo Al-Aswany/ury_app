@@ -57,7 +57,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   const [selectedVariant, setSelectedVariant] = useState<Variant | undefined>(initialVariant || selectedItem?.variants?.[0]);
   const [selectedAddons, setSelectedAddons] = useState<Array<Omit<Addon, 'category'>>>(initialAddons);
   const [quantity, setQuantity] = useState<string>(editMode ? initialQuantity?.toString() || '0' : '0');
-  const [comments, setComments] = useState<string>(itemToReplace?.comments || existingCartItem?.comments || '');
+  const [comments, setComments] = useState<string>(itemToReplace?.comment || existingCartItem?.comment || '');
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Initialize quantity and comments from cart if not in edit mode
@@ -65,7 +65,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     if (!editMode && selectedItem) {
       if (existingCartItem) {
         setQuantity(existingCartItem.quantity.toString());
-        setComments(existingCartItem.comments || '');
+        setComments(existingCartItem.comment || '');
       } else {
         const cartQuantity = getItemQuantityFromCart(selectedItem);
         setQuantity(cartQuantity.toString());
@@ -153,7 +153,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
       selectedVariant,
       selectedAddons,
       price: basePrice,
-      comments: comments.trim()
+      comment: comments.trim()
     };
     addToOrder(orderItem);
     handleClose();
