@@ -98,7 +98,7 @@ const Sidebar = ({ disabled }: SidebarProps) => {
                   )}
                   <div className="flex items-center gap-3 ml-1">
                     <Cookie className="w-4 h-4 text-gray-500" />
-                    <span>{category}</span>
+                    <span className="text-start">{category}</span>
                   </div>
                   <Badge variant="secondary" size="sm" className="text-xs text-gray-500 bg-gray-100 min-w-[24px] text-center">
                     {count}
