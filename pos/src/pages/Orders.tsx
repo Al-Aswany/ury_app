@@ -171,6 +171,10 @@ export default function Orders() {
         posProfile: posStore.posProfile
       });
       showToast.success(`Printed Successfully`);
+      // Locally update selectedOrder.invoice_printed to 1
+      if (selectedOrder && typeof selectedOrder === 'object') {
+        selectOrder({ ...selectedOrder, invoice_printed: 1 });
+      }
       // If order was Unbilled, set to Draft and reload draft orders
       if (selectedStatus === 'Unbilled') {
         showToast.info('Order moved to Draft after printing.');
