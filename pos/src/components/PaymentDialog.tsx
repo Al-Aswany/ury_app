@@ -110,7 +110,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          additionalDiscount:appliedDiscount,
+          additionalDiscount:discountValue,
           cashier,
           customer,
           invoice,
