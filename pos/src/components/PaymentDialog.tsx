@@ -92,6 +92,26 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const roundedFinalAdjustment = Math.round(finalAdjustment * 100) / 100;
   const showFinalAdjustment = Math.abs(roundedFinalAdjustment) > 0.001;
 
+  // Helper to calculate remaining balance
+  const getRemainingBalance = (currentId: string) => {
+    const totalEntered = Object.entries(paymentInputs)
+      .filter(([id]) => id !== currentId)
+      .reduce((sum, [_, val]) => sum + (parseFloat(val) || 0), 0);
+    return Math.max(0, finalTotal - totalEntered);
+  };
+
+  // Handler for input focus to auto-fill remaining balance
+  const handlePaymentInputFocus = (id: string) => {
+    setPaymentInputs(inputs => {
+      // Only auto-fill if the field is empty or zero
+      if (!inputs[id] || parseFloat(inputs[id]) === 0) {
+        const remaining = getRemainingBalance(id);
+        return { ...inputs, [id]: remaining > 0 ? String(remaining) : '' };
+      }
+      return inputs;
+    });
+  };
+
   const handlePayment = async () => {
     if (paymentsTotal !== finalTotal) {
       setError('Payment amounts must add up to the total');
@@ -197,6 +217,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                       step="0.01"
                       value={paymentInputs[id] || ''}
                       onChange={e => setPaymentInputs(inputs => ({ ...inputs, [id]: e.target.value }))}
+                      onFocus={() => handlePaymentInputFocus(id)}
                       placeholder="Amount"
                       className="flex-1"
                       size="sm"
