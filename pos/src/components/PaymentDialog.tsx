@@ -113,10 +113,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   };
 
   const handlePayment = async () => {
-    if (payments.length < finalTotal) {
-      setError('Please collect the remaining amount');
-      return;
-    }
     setIsProcessing(true);
     setError(null);
     try {
@@ -291,7 +287,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             variant={isProcessing || payments.length === 0 ? "secondary" : "default"}
             className="w-full"
           >
-            {isProcessing ? 'Processing...' : `Pay ${formatCurrency(paymentsTotal>finalTotal?paymentsTotal:finalTotal)}`}
+            {isProcessing ? 'Processing...' : `Pay ${formatCurrency(paymentsTotal>0?paymentsTotal:finalTotal)}`}
           </Button>
         </div>
       </DialogContent>
