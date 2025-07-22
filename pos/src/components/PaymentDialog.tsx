@@ -66,7 +66,6 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     const calculatedDiscount = (grandTotal * value) / 100;
     setAppliedDiscount(calculatedDiscount);
     setError(null);
-    setDiscountValue('');
   };
 
   // Order summary logic
