@@ -9,11 +9,11 @@
         :key="item.item"
       >
         <div class="w-full" v-if="this.auth.viewItemImage">
-          <div v-if="item.item_imgae"
+          <div v-if="item.item_image"
             class="aspect-square w-full overflow-hidden"
           >
             <img
-              :src="this.menu.getFullImagePath(item.item_imgae)"
+              :src="this.menu.getFullImagePath(item.item_image)"
               alt="Item Image"
               class="h-full w-full rounded object-cover"
             />

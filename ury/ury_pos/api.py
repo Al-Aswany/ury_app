@@ -87,7 +87,7 @@ def getRestaurantMenu(pos_profile, room=None, order_type=None):
             "rate": item.rate,
             "special_dish": item.special_dish,
             "disabled": item.disabled,
-            "item_imgae": frappe.db.get_value("Item", item.item, "image"),
+            "item_image": frappe.db.get_value("Item", item.item, "image"),
             "course": item.course,
         }
         for item in menu_items
@@ -629,7 +629,7 @@ def getAggregatorItem(aggregator):
             "item": item.item_code,
             "item_name": item.item_name,
             "rate": item.price_list_rate,
-            "item_imgae": frappe.db.get_value("Item", item.item, "image"),
+            "item_image": frappe.db.get_value("Item", item.item, "image"),
         }
         for item in aggregatorItem
         if not frappe.db.get_value("Item", item.item_code, "disabled")
