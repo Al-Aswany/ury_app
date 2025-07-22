@@ -116,11 +116,21 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     setIsProcessing(true);
     setError(null);
     try {
+      // Calculate additionalDiscount as percentage string
+      let additionalDiscount = '';
+      if (appliedDiscount > 0) {
+        if (discountType === 'percentage') {
+          additionalDiscount = discountValue || ((appliedDiscount / grandTotal) * 100).toFixed(2);
+        } else {
+          // Fixed discount: calculate percentage
+          additionalDiscount = ((appliedDiscount / grandTotal) * 100).toFixed(2);
+        }
+      }
       const res = await fetch('/api/method/ury.ury.doctype.ury_order.ury_order.make_invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          additionalDiscount: '',
+          additionalDiscount,
           cashier,
           customer,
           invoice,
