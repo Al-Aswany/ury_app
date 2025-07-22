@@ -129,7 +129,7 @@ interface POSStore extends POSState {
   setSelectedCategory: (category: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCustomer: (customer: Customer | null) => void;
-  setSelectedTable: (table: string | null, room: string | null) => void;
+  setSelectedTable: (table: string | null, room: string | null, doNotLoadOrder?: boolean) => void;
   setSelectedOrderType: (type: OrderType) => void;
   setQuickFilter: (filter: 'all' | 'special') => void;
   setSelectedItem: (item: MenuItem | null) => void;
@@ -444,10 +444,11 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedCustomer: (customer) => set({ selectedCustomer: customer }),
-  setSelectedTable: (table: string | null, room: string | null) => {
+  setSelectedTable: (table: string | null, room: string | null, doNotLoadOrder: boolean = false) => {
     set({ selectedTable: table, selectedRoom: room });
-    if (table) {
-      get().loadTableOrder(table);
+    if (table ) {
+      if (!doNotLoadOrder) 
+        get().loadTableOrder(table);
     } else {
       get().clearTableOrder();
     }

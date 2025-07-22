@@ -127,10 +127,10 @@ export default function Orders() {
       const order = data.message;
       // Fill POS store
       posStore.resetOrderState();
-      posStore.setOrderForUpdate(order.name);
       posStore.setSelectedOrderType(order.order_type);
+      posStore.setOrderForUpdate(order.name);
       if (order.restaurant_table) {
-        posStore.setSelectedTable(order.restaurant_table, order.custom_restaurant_room || null);
+        posStore.setSelectedTable(order.restaurant_table, order.custom_restaurant_room || null,true);
       }
       posStore.setSelectedCustomer({ id: order.customer, name: order.customer_name, phone: order.mobile_number });
       // Fill cart
