@@ -12,13 +12,13 @@ interface Props {
   onClose: () => void;
 }
 
-const TableIcon = ({ type, className }: { type: 'round' | 'square' | 'rectangle' | undefined; className?: string }) => {
+const TableIcon = ({ type, className }: { type: 'Circle' | 'Square' | 'Rectangle' | undefined; className?: string }) => {
   switch (type) {
-    case 'round':
+    case 'Circle':
       return <Circle className={className} />;
-    case 'square':
+    case 'Square':
       return <Square className={className} />;
-    case 'rectangle':
+    case 'Rectangle':
       return <RectangleHorizontal className={className} />;
     default:
       return <Square className={className} />;
@@ -186,12 +186,12 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
                     'focus-visible:ring-2 focus-visible:ring-primary-600',
                   )}
                 >
-                  <Square 
-                    className={cn(
-                      'w-8 h-8',
-                      table.occupied === 1 ? 'text-amber-500' : 'text-gray-500'
-                    )} 
-                  />
+                  <TableIcon
+                  type={table.table_shape || "Rectangle"}
+                  className={cn(
+                    'w-8 h-8',
+                    table.occupied === 1 ? 'text-amber-500' : 'text-gray-500'
+                  )} />
                   <div className="text-center">
                     <div className="font-medium">{table.name}</div>
                     <div className="mt-2 h-4"> {/* Height placeholder that matches Badge height */}

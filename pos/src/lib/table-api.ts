@@ -12,6 +12,7 @@ export interface Table {
   latest_invoice_time: string | null;
   is_take_away: number;
   restaurant_room: string;
+  table_shape:'Circle' | 'Square' | 'Rectangle';
 }
 
 export async function getRestaurantMenu(posProfile: string, room?: string | null) {
