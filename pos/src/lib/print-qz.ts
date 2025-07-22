@@ -1,7 +1,6 @@
 import qz from 'qz-tray';
 import axios from 'axios';
-// @ts-expect-error: No types for 'privateKey' available
-// import { privateKey } from '../../../privateKey';
+import { privateKey } from '../../privateKey';
 import { KEYUTIL, KJUR, stob64, hextorstr } from 'jsrsasign';
 
 export async function loadQzPrinter(host: string): Promise<void> {

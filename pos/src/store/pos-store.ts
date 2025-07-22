@@ -380,7 +380,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       if (existingItemIndex !== -1) {
         const existingItem = get().activeOrders[existingItemIndex];
         const newQuantity = existingItem.quantity + item.quantity;
-        const newComment = existingItem?.comment || "" + item.comment || "";
+        const newComment = item.comment !== undefined ? item.comment : existingItem?.comment || "";
 
         if (!get().validateQuantity(newQuantity)) {
           throw new CartError(`Cannot add item. Total quantity would exceed ${MAX_QUANTITY}`);

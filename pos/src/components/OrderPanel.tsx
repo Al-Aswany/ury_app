@@ -100,7 +100,8 @@ const OrderPanel = () => {
           item: item.id,
           item_name: item.name,
           rate: item.selectedVariant?.price || item.price,
-          qty: item.quantity
+          qty: item.quantity,
+          comment: item.comment || undefined
         })),
         no_of_pax: 1,
         pos_profile: posProfile.name,
