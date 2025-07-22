@@ -295,12 +295,11 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const menuItems: MenuItem[] = items.map(item => ({
         id: item.item,
         name: item.item_name,
-        image: item.item_imgae || null,
+        image: item.item_image || null,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
         item: item.item,
         item_name: item.item_name,
-        item_image: null,
-        item_imgae: item.item_imgae,
+        item_image: item.item_image,
         course: item.course,
         description: item.description || '',
         special_dish: item.special_dish || 0,
@@ -325,7 +324,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
         ...item,
         id: item.item,
         name: item.item_name,
-        image: item.item_imgae || null,
+        image: item.item_image || null,
         price: typeof item.rate === 'string' ? parseFloat(item.rate) : item.rate || 0,
         category: item.course
       }));
@@ -597,7 +596,6 @@ export const usePOSStore = create<POSStore>((set, get) => ({
             item: item.item_code,
             item_name: item.item_name,
             item_image: null,
-            item_imgae: null,
             course: '',
             description: item.description || '',
             special_dish: 0 as 0 | 1,

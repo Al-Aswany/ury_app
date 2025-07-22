@@ -145,7 +145,6 @@ export default function Orders() {
         item: item.item_code,
         item_name: item.item_name,
         item_image: null,
-        item_imgae: null,
         course: '',
         description: item.description || '',
         special_dish: 0,

@@ -3,7 +3,7 @@ import { call } from './frappe-sdk';
 export interface MenuItem {
   item: string;
   item_name: string;
-  item_imgae: string | null;
+  item_image: string | null;
   rate: number | string;
   course: string;
   trending?: boolean;
