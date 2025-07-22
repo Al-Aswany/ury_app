@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Percent, Gift, Award, CreditCard, Wallet, QrCode } from 'lucide-react';
+import { X, Percent, Gift, Award, CreditCard, Wallet, QrCode, Coins } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
 import { Button, Input, Select, SelectItem, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui';
@@ -113,8 +113,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   };
 
   const handlePayment = async () => {
-    if (paymentsTotal !== finalTotal) {
-      setError('Payment amounts must add up to the total');
+    if (payments.length < finalTotal) {
+      setError('Please collect the remaining amount');
       return;
     }
     setIsProcessing(true);
@@ -229,8 +229,14 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             </div>
             <div className="flex justify-between mt-2 text-sm">
               <span className="font-medium">Total Entered</span>
-              <span className={paymentsTotal === finalTotal ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+              <span className={'text-green-600 font-semibold flex items-center gap-1'}>
                 {formatCurrency(paymentsTotal)} / {formatCurrency(finalTotal)}
+                {paymentsTotal > finalTotal && (
+                  <span className="text-yellow-700 font-semibold">
+                    <Coins className="inline w-4 h-4 ml-1 text-yellow-500" />
+                    <span className="text-yellow-500 font-bold ml-1">{formatCurrency(paymentsTotal - finalTotal)}</span>
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -281,11 +287,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           {/* Payment Button */}
           <Button
             onClick={handlePayment}
-            disabled={isProcessing || paymentsTotal !== finalTotal || payments.length === 0}
-            variant={isProcessing || paymentsTotal !== finalTotal || payments.length === 0 ? "secondary" : "default"}
+            disabled={isProcessing || payments.length === 0}
+            variant={isProcessing || payments.length === 0 ? "secondary" : "default"}
             className="w-full"
           >
-            {isProcessing ? 'Processing...' : `Pay ${formatCurrency(finalTotal)}`}
+            {isProcessing ? 'Processing...' : `Pay ${formatCurrency(paymentsTotal>finalTotal?paymentsTotal:finalTotal)}`}
           </Button>
         </div>
       </DialogContent>
