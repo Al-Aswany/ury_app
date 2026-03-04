@@ -4,6 +4,7 @@ import { OrderItem, usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
 import { Button, Dialog, DialogContent, Input } from './ui';
 import { db } from '../lib/frappe-sdk';
+import { useTranslation } from 'react-i18next';
 
 interface Variant {
   id: string;
@@ -35,22 +36,23 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   initialQuantity,
   itemToReplace
 }) => {
-  const { 
-    selectedItem, 
-    addToOrder, 
-    removeFromOrder, 
-    setSelectedItem, 
+  const { t } = useTranslation();
+  const {
+    selectedItem,
+    addToOrder,
+    removeFromOrder,
+    setSelectedItem,
     getItemQuantityFromCart,
     activeOrders,
     menuItems
   } = usePOSStore();
-  
+
   // Find existing item in cart
   const existingCartItem = selectedItem ? activeOrders.find(
     order => order.id === selectedItem.id &&
     (!order.selectedVariant || order.selectedVariant.id === initialVariant?.id) &&
-    (!order.selectedAddons || order.selectedAddons.length === initialAddons.length && 
-      order.selectedAddons.every(addon => 
+    (!order.selectedAddons || order.selectedAddons.length === initialAddons.length &&
+      order.selectedAddons.every(addon =>
         initialAddons.some(initAddon => initAddon.id === addon.id)
       ))
   ) : null;
@@ -83,7 +85,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
       });
   }, [selectedItem]);
 
-  
+
   const addonDetails = Array.isArray(itemDoc?.custom_pos_add_on_items)
     ? itemDoc.custom_pos_add_on_items
         .map((entry: any) => {
@@ -290,7 +292,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   };
 
   const handleAddonToggle = (addon: Omit<Addon, 'category'>) => {
-    setSelectedAddons(current => 
+    setSelectedAddons(current =>
       current.some(item => item.id === addon.id)
         ? current.filter(item => item.id !== addon.id)
         : [...current, addon]
@@ -307,7 +309,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={handleClose}>
-      <DialogContent 
+      <DialogContent
         ref={dialogRef}
         variant="xlarge"
         className="bg-white w-full max-w-[90rem] max-h-[90vh] overflow-y-auto flex flex-col md:flex-row p-0"
@@ -366,7 +368,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
           </div>
 
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-3">Quantity</h3>
+            <h3 className="text-lg font-semibold mb-3">{t('order.quantity')}</h3>
             <div className="flex items-center space-x-2">
               <Button
                 onClick={handleDecrement}
@@ -433,7 +435,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
         <div className="h-auto md:w-1/3 p-6 border-t md:border-t-0 md:border-l border-gray-200 overflow-y-auto flex flex-col">
           <div className="overflow-y-auto mb-6">
             {isAddonLoading ? (
-              <div className="mb-6 flex items-center justify-center text-gray-500">Loading add-ons...</div>
+              <div className="mb-6 flex items-center justify-center text-gray-500">{t('common.loading')}...</div>
             ) : addonError ? (
               <div className="flex items-center justify-center text-red-500">{addonError}</div>
             ) : addonDetails.length > 0 ? (
@@ -466,7 +468,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
           {/* Always show total section at the end */}
           <div className="mt-auto pt-2 border-t border-gray-200">
             <div className="flex justify-between items-center text-lg font-semibold">
-              <span>Total&nbsp;</span>
+              <span>{t('common.total')}&nbsp;</span>
               <span>{formatCurrency(total)}</span>
             </div>
             <Button
@@ -475,7 +477,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               size="lg"
               disabled={numericQuantity === 0}
             >
-              {editMode || existingCartItem ? 'Update Order' : 'Add to Order'}
+              {editMode || existingCartItem ? t('order.updateOrder') : t('menu.addToCart')}
             </Button>
           </div>
         </div>
@@ -484,4 +486,4 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   );
 };
 
-export default ProductDialog; 
+export default ProductDialog;

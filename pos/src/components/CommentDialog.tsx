@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from './ui';
 
 interface CommentDialogProps {
@@ -10,6 +11,7 @@ interface CommentDialogProps {
 }
 
 const CommentDialog = ({ isOpen, onClose, onSave, initialComment = '' }: CommentDialogProps) => {
+  const { t } = useTranslation();
   const [comment, setComment] = useState(initialComment);
 
   const handleSave = () => {
@@ -31,7 +33,7 @@ const CommentDialog = ({ isOpen, onClose, onSave, initialComment = '' }: Comment
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-semibold text-gray-900">
-              Order Comments
+              {t('order.comment')}
             </h2>
           </div>
           <Button
@@ -46,13 +48,13 @@ const CommentDialog = ({ isOpen, onClose, onSave, initialComment = '' }: Comment
         
         <div className="mb-6">
           <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-            Add comments for this order
+            {t('order.addComment')}
           </label>
           <textarea
             id="comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Enter any special instructions or comments..."
+            placeholder={t('order.addComment')}
             className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             autoFocus
           />
@@ -64,13 +66,13 @@ const CommentDialog = ({ isOpen, onClose, onSave, initialComment = '' }: Comment
             variant="outline"
             className="px-4 py-2"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700"
           >
-            Save Comment
+            {t('common.save')}
           </Button>
         </div>
       </div>

@@ -8,12 +8,14 @@ import { getRooms, getTables, Room, Table } from '../lib/table-api';
 import { Badge } from './ui/badge';
 import { Spinner } from './ui/spinner';
 import { TableShapeIcon } from './TableShapeIcon';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onClose: () => void;
 }
 
 const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
+  const { t } = useTranslation();
   const { selectedTable, setSelectedTable, posProfile } = usePOSStore();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
@@ -38,7 +40,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
         // Try to get rooms from session storage first
         const sessionKey = `ury_rooms_${posProfile.branch}`;
         const cachedRooms = sessionStorage.getItem(sessionKey);
-        
+
         if (cachedRooms) {
           const parsedRooms = JSON.parse(cachedRooms) as Room[];
           setRooms(parsedRooms);
@@ -56,7 +58,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           sessionStorage.setItem(sessionKey, JSON.stringify(fetchedRooms));
         }
       } catch (e) {
-        setError('Failed to load rooms');
+        setError(t('table.failedToLoadRooms'));
       } finally {
         setLoadingRooms(false);
       }
@@ -82,7 +84,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
         setTables(sortedTables);
         setTablesCache(prev => ({ ...prev, [selectedRoom]: fetchedTables }));
       } catch (e) {
-        setError('Failed to load tables');
+        setError(t('table.failedToLoadTables'));
         setTables([]);
       } finally {
         setLoadingTables(false);
@@ -111,7 +113,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           {/* Room Selection */}
           {loadingRooms ? (
             <div className="mb-6">
-              <Spinner message="Loading rooms..." />
+              <Spinner message={t('table.loadingRooms')} />
             </div>
           ) : error ? (
             <div className="mb-6 flex flex-col items-center justify-center gap-2 text-red-500">
@@ -121,7 +123,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           ) : rooms.length === 0 ? (
             <div className="mb-6 flex flex-col items-center justify-center gap-2 text-gray-400">
               <Square className="w-8 h-8 mb-1" />
-              <span>No rooms found</span>
+              <span>{t('table.noRooms')}</span>
             </div>
           ) : (
             <div className="flex gap-2 mb-6">
@@ -142,7 +144,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           {/* Table Grid */}
           {loadingTables ? (
             <div className="">
-              <Spinner message="Loading tables..." />
+              <Spinner message={t('table.loadingTables')} />
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center gap-2 text-red-500 mt-8">
@@ -152,7 +154,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           ) : tables.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 text-gray-400 mt-8">
               <Square className="w-8 h-8 mb-1" />
-              <span>No tables found</span>
+              <span>{t('table.noTables')}</span>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-6">
@@ -186,7 +188,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
                     <div className="mt-2 h-4"> {/* Height placeholder that matches Badge height */}
                       {table.occupied === 1 && (
                         <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 hover:bg-amber-100">
-                          Occupied
+                          {t('table.occupied')}
                         </Badge>
                       )}
                     </div>
@@ -201,4 +203,4 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
   );
 };
 
-export default TableSelectionDialog; 
+export default TableSelectionDialog;

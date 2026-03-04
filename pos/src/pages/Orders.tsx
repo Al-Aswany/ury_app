@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Clock, User, UserCheck, Receipt, Printer, Pencil, X } from 'lucide-react';
+import { Clock, User, UserCheck, Receipt, Printer, Pencil, X, AlertTriangle } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '../components/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { showToast } from '../components/ui/toast';
@@ -11,10 +11,13 @@ import { Textarea } from '../components/ui/textarea';
 import { usePOSStore } from '../store/pos-store';
 import { useNavigate } from 'react-router-dom';
 import PaymentDialog from '../components/PaymentDialog';
+import WastageDialog from '../components/WastageDialog';
 import { printOrder } from '../lib/print';
 import { call } from '../lib/frappe-sdk';
+import { useTranslation } from 'react-i18next';
 
 export default function Orders() {
+  const { t } = useTranslation();
   const { 
     orders,
     orderLoading,
@@ -44,6 +47,7 @@ export default function Orders() {
   const [editLoading, setEditLoading] = React.useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
   const [isPrinting, setIsPrinting] = React.useState(false);
+  const [showWastageDialog, setShowWastageDialog] = React.useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -92,10 +96,34 @@ export default function Orders() {
     }
   };
 
+  // Helper function to translate order status
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return t('order.draft');
+      case 'Unbilled':
+        return t('order.unbilled');
+      case 'Paid':
+        return t('order.paid');
+      case 'Unpaid':
+        return t('order.unpaid');
+      case 'Recently Paid':
+        return t('order.recentlyPaid');
+      case 'Consolidated':
+        return t('order.consolidated');
+      case 'Return':
+        return t('order.return');
+      case 'Cancelled':
+        return t('order.cancelled');
+      default:
+        return status;
+    }
+  };
+
   async function handleCancelOrder() {
     if (!selectedOrder) return;
     if (!cancelReason.trim()) {
-      showToast.error('Please enter a reason for cancellation.');
+      showToast.error(t('order.enterCancellationReason'));
       return;
     }
     setCancelLoading(true);
@@ -104,13 +132,13 @@ export default function Orders() {
         invoice_id: selectedOrder.name,
         reason: cancelReason
       })
-      showToast.success('Order cancelled successfully');
+      showToast.success(t('order.orderCancelledSuccessfully'));
       setCancelDialogOpen(false);
       setCancelReason('');
       clearSelectedOrder();
       fetchOrders();
     } catch (err) {
-      showToast.error(err instanceof Error ? err.message : 'Failed to cancel order');
+      showToast.error(err instanceof Error ? err.message : t('messages.error.failedToCancelOrder'));
     } finally {
       setCancelLoading(false);
     }
@@ -131,7 +159,17 @@ export default function Orders() {
       if (order.restaurant_table) {
         posStore.setSelectedTable(order.restaurant_table, order.custom_restaurant_room || null,true);
       }
-      posStore.setSelectedCustomer({ id: order.customer, name: order.customer_name, phone: order.mobile_number });
+      // Restore employee meal or customer state
+      if (order.is_employee_meal === 1 && order.employee) {
+        posStore.setIsEmployeeMeal(true);
+        posStore.setSelectedEmployee({
+          id: order.employee,
+          name: order.employee_name || order.employee,
+        });
+      } else {
+        posStore.setIsEmployeeMeal(false);
+        posStore.setSelectedCustomer({ id: order.customer, name: order.customer_name, phone: order.mobile_number });
+      }
       // Fill cart
       const items = (order.items || []).map((item: any) => ({
         id: item.item_code,
@@ -155,7 +193,7 @@ export default function Orders() {
       // Redirect to POS page
       navigate('/');
     } catch (err) {
-      showToast.error(err instanceof Error ? err.message : 'Failed to edit order');
+      showToast.error(err instanceof Error ? err.message : t('order.failedToEditOrder'));
     } finally {
       setEditLoading(false);
     }
@@ -169,14 +207,14 @@ export default function Orders() {
         orderId: selectedOrder.name,
         posProfile: posStore.posProfile
       });
-      showToast.success(`Printed Successfully`);
+      showToast.success(t('order.printedSuccessfully'));
       // Locally update selectedOrder.invoice_printed to 1
       if (selectedOrder && typeof selectedOrder === 'object') {
         selectOrder({ ...selectedOrder, invoice_printed: 1 });
       }
       // If order was Unbilled, set to Draft and reload draft orders
       if (selectedStatus === 'Unbilled') {
-        showToast.info('Order moved to Draft after printing.');
+        showToast.info(t('order.orderMovedToDraft'));
         setSelectedStatus('Draft');
         fetchOrders();
       }
@@ -191,7 +229,7 @@ export default function Orders() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <p className="text-xl font-semibold text-red-600 mb-2">Failed to load orders</p>
+          <p className="text-xl font-semibold text-red-600 mb-2">{t('order.failedToLoadOrders')}</p>
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -215,7 +253,7 @@ export default function Orders() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center mt-10">
-              <p className="text-gray-500">No orders found</p>
+              <p className="text-gray-500">{t('order.noOrders')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-screen-xl mx-auto">
@@ -239,7 +277,7 @@ export default function Orders() {
                         </p>
                       </div>
                       <Badge variant={getBadgeVariant(order.status)} className="ml-2">
-                        {order.status}
+                        {translateStatus(order.status)}
                       </Badge>
                     </div>
                     </div>
@@ -278,11 +316,11 @@ export default function Orders() {
                   className='w-20'
                   size="xs"
                 >
-                  Previous
+                  {t('order.previous')}
                 </Button>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Page {pagination.currentPage}
+                    {t('order.page')} {pagination.currentPage}
                   </span>
                 </div>
                 <Button
@@ -292,7 +330,7 @@ export default function Orders() {
                   className='w-20'
                   size="xs"
                 >
-                  Next
+                  {t('order.next')}
                 </Button>
               </div>
             </div>
@@ -304,8 +342,8 @@ export default function Orders() {
       <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-10">
         {!selectedOrder ? (
           <div className="text-center h-full flex flex-col items-center justify-center text-gray-500 p-6">
-            <p className="text-lg font-medium mb-2">Select an order to view details</p>
-            <p className="text-sm">Click on any order card to view its details</p>
+            <p className="text-lg font-medium mb-2">{t('order.selectOrderToViewDetails')}</p>
+            <p className="text-sm">{t('order.clickOrderCardToView')}</p>
           </div>
         ) : selectedOrderLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -313,7 +351,7 @@ export default function Orders() {
           </div>
         ) : selectedOrderError ? (
           <div className="text-center h-full flex flex-col items-center justify-center text-red-500 p-6">
-            <p className="text-lg font-medium mb-2">Failed to load order details</p>
+            <p className="text-lg font-medium mb-2">{t('order.failedToLoadOrderDetails')}</p>
             <p className="text-sm">{selectedOrderError}</p>
           </div>
         ) : (
@@ -335,6 +373,17 @@ export default function Orders() {
                       <Pencil className="w-4 h-4" />
                       {editLoading && <span className="ml-2 text-xs">Loading...</span>}
                     </button>
+                    {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Unbilled') && (
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-md p-2 bg-orange-50 hover:bg-orange-100 text-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        aria-label={t('wastage.markAsWaste')}
+                        title={t('wastage.markAsWaste')}
+                        onClick={() => setShowWastageDialog(true)}
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -346,7 +395,7 @@ export default function Orders() {
                   </>
                 )}
                 <Badge variant={getBadgeVariant(selectedOrder.status)}>
-                  {selectedOrder.status}
+                  {translateStatus(selectedOrder.status)}
                 </Badge>
               </div>
             </div>
@@ -354,14 +403,14 @@ export default function Orders() {
             <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Cancel Order</DialogTitle>
+                  <DialogTitle>{t('order.cancelOrder')}</DialogTitle>
                   <DialogDescription>
-                    Please provide a reason for cancelling this order.
+                    {t('order.cancelOrderReason')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="px-6 mb-3">
                 <Textarea
-                  placeholder="Enter cancel reason"
+                  placeholder={t('order.enterCancelReason')}
                   value={cancelReason}
                   onChange={e => setCancelReason(e.target.value)}
                   disabled={cancelLoading}
@@ -370,10 +419,10 @@ export default function Orders() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelLoading}>
-                    Close
+                    {t('common.close')}
                   </Button>
                   <Button variant="danger" onClick={handleCancelOrder} disabled={cancelLoading}>
-                    {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
+                    {cancelLoading ? t('order.cancelling') : t('order.confirmCancel')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -413,13 +462,13 @@ export default function Orders() {
 
               {/* Order Items */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('order.orderItems')}</h3>
                 <div className="space-y-3">
                   {selectedOrderItems.map((item, index) => (
                     <div key={index} className="flex justify-between items-start py-2 border-b border-gray-100">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">{item.item_name}</p>
-                        <p className="text-xs text-gray-500">Qty: {item.qty}</p>
+                        <p className="text-xs text-gray-500">{t('order.qty')}: {item.qty}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-900">
@@ -434,7 +483,7 @@ export default function Orders() {
               {/* Taxes */}
               {selectedOrderTaxes.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Taxes & Charges</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('order.taxesAndCharges')}</h3>
                   <div className="space-y-2">
                     {selectedOrderTaxes.map((tax, index) => (
                       <div key={index} className="flex justify-between items-center py-1">
@@ -469,13 +518,13 @@ export default function Orders() {
                     className="flex-1"
                     onClick={() => {
                       if (String(selectedOrder.invoice_printed) === '0') {
-                        showToast.error('Please print invoice before making payment');
+                        showToast.error(t('order.printInvoiceBeforePayment'));
                         return;
                       }
                       setShowPaymentDialog(true);
                     }}
                   >
-                    Payment
+                    {t('order.payment')}
                   </Button>
                 )}
                 {/* Total */}
@@ -500,6 +549,30 @@ export default function Orders() {
           owner={posStore.posProfile?.cashier || ''}
           fetchOrders={fetchOrders}
           clearSelectedOrder={clearSelectedOrder}
+          isEmployeeMeal={selectedOrder.is_employee_meal === 1}
+        />
+      )}
+      {showWastageDialog && selectedOrder && (
+        <WastageDialog
+          isOpen={showWastageDialog}
+          onClose={() => setShowWastageDialog(false)}
+          invoiceId={selectedOrder.name}
+          invoiceItems={selectedOrderItems.map(item => ({
+            name: item.name,
+            item_code: item.item_code,
+            item_name: item.item_name,
+            qty: item.qty,
+            uom: item.uom
+          }))}
+          onSuccess={(result) => {
+            setShowWastageDialog(false);
+            if (result.invoice_action === 'cancelled') {
+              clearSelectedOrder();
+            } else if (selectedOrder) {
+              selectOrder(selectedOrder);
+            }
+            fetchOrders();
+          }}
         />
       )}
     </div>

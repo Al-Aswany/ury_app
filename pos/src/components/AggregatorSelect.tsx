@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { usePOSStore } from '../store/pos-store';
 import { Select, SelectItem } from './ui/select';
 import { getAggregators, type Aggregator } from '../lib/aggregator-api';
+import { useTranslation } from 'react-i18next';
 
 interface AggregatorSelectProps {
   disabled?: boolean;
 }
 
 export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
+  const { t } = useTranslation();
   const { selectedAggregator, setSelectedAggregator, fetchAggregatorMenu } = usePOSStore();
   const [aggregators, setAggregators] = useState<Aggregator[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
   const handleAggregatorChange = async (value: string) => {
     const aggregator = aggregators.find(a => a.customer === value);
     setSelectedAggregator(aggregator || null);
-    
+
     if (aggregator) {
       await fetchAggregatorMenu(aggregator.customer);
     }
@@ -43,11 +45,11 @@ export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
         value={selectedAggregator?.customer || ''}
         onValueChange={handleAggregatorChange}
         disabled={disabled || loading}
-        placeholder={loading ? 'Loading aggregators...' : 'Select an aggregator'}
+        placeholder={loading ? t('common.loading') + '...' : 'Select an aggregator'}
       >
         {aggregators.map((aggregator) => (
-          <SelectItem 
-            key={aggregator.customer} 
+          <SelectItem
+            key={aggregator.customer}
             value={aggregator.customer}
             className="capitalize"
           >
@@ -57,4 +59,4 @@ export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
       </Select>
     </div>
   );
-} 
+}

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Eye, Layout, Loader2, Printer, Square, Users } from 'lucide-react';
-import { cn, formatInvoiceTime } from '../lib/utils';
+import { AlertTriangle, Eye, Loader2, Printer, Square, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { cn } from '../lib/utils';
 import { usePOSStore } from '../store/pos-store';
-import { getRooms, getTables, getTableCount ,type Room, type Table } from '../lib/table-api';
+import { getRooms, getTables, getTableCount, type Room, type Table } from '../lib/table-api';
 import { Spinner } from '../components/ui/spinner';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -13,11 +14,10 @@ import { getTableOrder } from '../lib/order-api';
 import { printOrder } from '../lib/print';
 import { showToast } from '../components/ui/toast';
 
-import LayoutView from '../components/LayoutView';
-
 const sortTables = (tables: Table[]) => [...tables].sort((a, b) => a.name.localeCompare(b.name));
 
 const TableView = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { posProfile, setSelectedTable, setSelectedOrderType } = usePOSStore();
 
@@ -60,7 +60,7 @@ const TableView = () => {
         }
       } catch (e) {
         console.error(e);
-        setError('Failed to load rooms');
+        setError(t('table.failedToLoadRooms'));
       } finally {
         setLoadingRooms(false);
       }
@@ -90,7 +90,7 @@ const TableView = () => {
 
     if (!shouldFetch) return;
 
-  async function fetchRoomCounts() {
+    async function fetchRoomCounts() {
       setLoadingRoomCounts(true);
       try {
         const counts = await Promise.all(
@@ -132,7 +132,7 @@ const TableView = () => {
         setTablesCache(prev => ({ ...prev, [roomName]: sortedTables }));
       } catch (e) {
         console.error(e);
-        setError('Failed to load tables');
+        setError(t('table.failedToLoadTables'));
         setTables([]);
       } finally {
         setLoadingTables(false);
@@ -140,6 +140,23 @@ const TableView = () => {
     },
     [tablesCache]
   );
+
+  const refreshRoomCount = useCallback(async (roomName: string) => {
+    const roomMeta = rooms.find(room => room.name === roomName);
+    const branchName = roomMeta?.branch ?? branch;
+    if (!roomName || !branchName) return;
+
+    try {
+      const count = await getTableCount(roomName, branchName);
+      setRoomCounts(prev => {
+        const next = { ...prev, [roomName]: count };
+        persistRoomCounts(next);
+        return next;
+      });
+    } catch (error) {
+      console.error(`Failed to refresh count for room ${roomName}`, error);
+    }
+  }, [rooms, branch, persistRoomCounts]);
 
   useEffect(() => {
     if (!selectedRoom) return;
@@ -162,7 +179,7 @@ const TableView = () => {
     event.stopPropagation();
 
     if (!posProfile) {
-      showToast.error('POS profile not loaded yet');
+      showToast.error(t('table.posProfileNotLoaded'));
       return;
     }
 
@@ -172,18 +189,46 @@ const TableView = () => {
       const invoiceId = orderResponse.message?.name;
 
       if (!invoiceId) {
-        showToast.error('No active order found for this table');
+        showToast.error(t('order.noActiveOrder'));
         return;
       }
 
       await printOrder({ orderId: invoiceId, posProfile });
-      showToast.success('Printed successfully');
+      showToast.success(t('table.printedSuccessfully'));
       await loadTables(table.restaurant_room, { useCache: false });
+      await refreshRoomCount(table.restaurant_room);
     } catch (error) {
-      showToast.error(error instanceof Error ? error.message : 'Failed to print order');
+      showToast.error(error instanceof Error ? error.message : t('order.failedToPrint'));
     } finally {
       setPrintingTable(null);
     }
+  };
+
+  const formatInvoiceTime = (timestamp: string | null) => {
+    if (!timestamp) return t('table.noBillActivity');
+
+    const parsedDate = new Date(timestamp);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' });
+    }
+
+    const timeOnlyMatch = timestamp.match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
+    if (timeOnlyMatch) {
+      const [, hours, minutes, seconds] = timeOnlyMatch;
+      const date = new Date();
+      date.setHours(Number(hours), Number(minutes), Number(seconds), 0);
+      const formatted = date.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      if (/^\d{1,2}:\d{2}$/.test(formatted)) {
+        return formatted;
+      }
+      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    }
+
+    return timestamp;
   };
 
   const tablesToDisplay = useMemo(() => sortTables(tables), [tables]);
@@ -208,75 +253,57 @@ const TableView = () => {
     }
   };
 
-  const [isLayoutView, setIsLayoutView] = useState(false);
-
-  const handleLayoutView = () => {
-    if (selectedRoom) {
-      loadTables(selectedRoom, { useCache: false });
-    }
-    setIsLayoutView(true);
-  };
-
-  if (isLayoutView && selectedRoom) {
-    return (
-      <LayoutView
-        selectedRoom={selectedRoom}
-        tables={tablesToDisplay}
-        onBackToGrid={() => setIsLayoutView(false)}
-        onRefresh={() => loadTables(selectedRoom, { useCache: false })}
-      />
-    );
-  }
-
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="max-w-screen-xl mx-auto">
           <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex flex-wrap gap-2">
-                {loadingRooms && (
-                  <div className="flex-1 min-w-[160px]">
-                    <Spinner message="Loading rooms..." />
-                  </div>
-                )}
+            <div className="flex flex-wrap gap-2">
+              {loadingRooms && (
+                <div className="flex-1 min-w-[160px]">
+                  <Spinner message={t('table.loadingRooms')} />
+                </div>
+              )}
 
-                {!loadingRooms && !hasRooms && (
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <AlertTriangle className="w-4 h-4" />
-                    No rooms found for this branch
-                  </div>
-                )}
+              {!loadingRooms && !hasRooms && (
+                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                  <AlertTriangle className="w-4 h-4" />
+                  {t('table.noRooms')}
+                </div>
+              )}
 
-                {rooms.map(room => (
-                  <Button
-                    key={room.name}
-                    variant="tab"
-                    data-selected={selectedRoom === room.name}
-                    onClick={() => handleRoomChange(room.name)}
-                    className="h-fit"
-                  >
-                    {room.name}
-                    {typeof roomCounts[room.name] === 'number' ? (
-                      <Badge variant="outline" className="ml-2 bg-white/60">
-                        {roomCounts[room.name]}
-                      </Badge>
-                    ) : null}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="flex-shrink-0">
+              {rooms.map(room => (
                 <Button
+                  key={room.name}
                   variant="tab"
-                  className="flex items-center gap-2 text-sm"
-                  onClick={() => handleLayoutView()}
+                  data-selected={selectedRoom === room.name}
+                  onClick={() => handleRoomChange(room.name)}
+                  className="h-fit"
                 >
-                  <Layout className="w-4 h-4" />
-                  Layout view
+                  {room.name}
+                  {typeof roomCounts[room.name] === 'number' ? (
+                    <Badge variant="outline" className="ml-2 bg-white/60">
+                      {roomCounts[room.name]}
+                    </Badge>
+                  ) : loadingRoomCounts ? (
+                    <Badge variant="outline" className="ml-2 bg-white/60">
+                      --
+                    </Badge>
+                  ) : null}
                 </Button>
-              </div>
+              ))}
             </div>
+
+            {/* <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 text-sm"
+                onClick={() => console.log('Layout view coming soon')}
+              >
+                <Layout className="w-4 h-4" />
+                Layout view
+              </Button>
+            </div> */}
           </div>
         </div>
       </div>
@@ -289,11 +316,11 @@ const TableView = () => {
               <p>{error}</p>
             </div>
           ) : showGridSkeleton ? (
-            <Spinner message="Loading tables..." />
+            <Spinner message={t('table.loadingTables')} />
           ) : tablesToDisplay.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-gray-500">
               <Square className="w-10 h-10" />
-              <p>No tables found for this room</p>
+              <p>{t('table.noTables')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -318,42 +345,42 @@ const TableView = () => {
                     )}
                   >
                     <div>
-                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <TableShapeIcon shape={table.table_shape || 'Rectangle'} />
-                          <span className="font-semibold text-lg text-gray-900">{table.name}</span>
+                            <TableShapeIcon shape={table.table_shape || 'Rectangle'} />
+                            <span className="font-semibold text-lg text-gray-900">{table.name}</span>
                         </div>
                         <Badge variant={isOccupied ? 'warning' : 'success'}>
-                          {isOccupied ? 'Occupied' : 'Available'}
+                            {isOccupied ? t('table.occupied') : t('table.available')}
                         </Badge>
-                      </div>
+                        </div>
 
-                      <div className="space-y-2 text-sm text-gray-700">
+                        <div className="space-y-2 text-sm text-gray-700">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">Room</span>
-                          <span>{table.restaurant_room}</span>
+                            <span className="font-medium">{t('table.room')}</span>
+                            <span>{table.restaurant_room}</span>
                         </div>
                         {isOccupied && (
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Started at</span>
+                            <div className="flex items-center justify-between">
+                            <span className="font-medium">{t('table.startedAt')}</span>
                             <span>{formatInvoiceTime(table.latest_invoice_time)}</span>
-                          </div>
+                            </div>
                         )}
                         {typeof table.no_of_seats === 'number' && (
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Seats</span>
+                            <div className="flex items-center justify-between">
+                            <span className="font-medium">{t('table.seats')}</span>
                             <span className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              {table.no_of_seats}
+                                <Users className="w-3 h-3" />
+                                {table.no_of_seats}
                             </span>
-                          </div>
+                            </div>
                         )}
                         {table.is_take_away === 1 && (
-                          <Badge variant="pending" className="mt-2">
-                            Take away
-                          </Badge>
+                            <Badge variant="pending" className="mt-2">
+                            {t('table.takeaway')}
+                            </Badge>
                         )}
-                      </div>
+                        </div>
                     </div>
 
                     {isOccupied ? (
@@ -363,7 +390,7 @@ const TableView = () => {
                           className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded bg-white hover:bg-amber-100 transition"
                         >
                           <Eye className="w-3 h-3" />
-                          Preview
+                          {t('table.preview')}
                         </button>
                         <button
                           onClick={(event) => handlePrintTable(table, event)}
@@ -373,18 +400,18 @@ const TableView = () => {
                           {printingTable === table.name ? (
                             <>
                               <Loader2 className="w-3 h-3 animate-spin" />
-                              Printing...
+                              {t('table.printing')}
                             </>
                           ) : (
                             <>
                               <Printer className="w-3 h-3" />
-                              Print
+                              {t('table.print')}
                             </>
                           )}
                         </button>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">Tap to start a new dine-in order</p>
+                      <p className="text-sm text-gray-500">{t('table.tapToStart')}</p>
                     )}
                   </div>
                 );
@@ -400,11 +427,11 @@ const TableView = () => {
           <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-              <span>Available</span>
+              <span>{t('table.available')}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-              <span>Occupied</span>
+              <span>{t('table.occupied')}</span>
             </div>
           </div>
         </div>
