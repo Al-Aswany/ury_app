@@ -260,6 +260,50 @@ initializeSocket(); // Initialize the socket after fetching the site name
 
 
 const frappe = new FrappeApp(url);
+// ---------------------------------------------------------------------------
+// WebSocket bridge for silent printing (webapp-hardware-bridge)
+// ---------------------------------------------------------------------------
+function createBridgePrinter(onConnect, onDisconnect) {
+  var BRIDGE_URL = "ws://127.0.0.1:12212/printer";
+  var ws = null;
+  var connected = false;
+  var reconnect_timer = null;
+
+  function connect() {
+    try {
+      ws = new WebSocket(BRIDGE_URL);
+      ws.onopen = function () {
+        connected = true;
+        if (reconnect_timer) { clearTimeout(reconnect_timer); reconnect_timer = null; }
+        if (onConnect) onConnect();
+      };
+      ws.onclose = function () {
+        connected = false;
+        if (onDisconnect) onDisconnect();
+        reconnect_timer = setTimeout(connect, 3000);
+      };
+    } catch (e) {
+      reconnect_timer = setTimeout(connect, 3000);
+    }
+  }
+
+  connect();
+
+  return {
+    isConnected: function () { return connected; },
+    send: function (job) {
+      if (!connected || !ws) return false;
+      ws.send(JSON.stringify(job));
+      return true;
+    },
+    disconnect: function () {
+      if (reconnect_timer) { clearTimeout(reconnect_timer); reconnect_timer = null; }
+      if (ws) { ws.onclose = null; ws.close(); }
+      connected = false;
+    },
+  };
+}
+
 export default {
   // inject: ["$auth", "$socket"],
   data() {
@@ -279,7 +323,11 @@ export default {
       audio_alert: 0,
       isOnline: navigator.onLine,
       statusMessage: "",
-      daily_order_number:0
+      daily_order_number: 0,
+      bridge: null,
+      silent_print_config: null,
+      known_kot_names: new Set(),
+      polling_interval: null,
     };
   },
   methods: {
@@ -552,6 +600,65 @@ export default {
         this.setStatusMessage("");
       }
     },
+    initBridge() {
+      this.bridge = createBridgePrinter(
+        () => console.log("KDS: silent print bridge connected"),
+        () => console.log("KDS: silent print bridge disconnected, retrying...")
+      );
+    },
+    fetchSilentPrintConfig() {
+      if (!this.production) return;
+      this.call
+        .get("ury_customization.ury_customization.api.silent_print.get_production_silent_config", {
+          production: this.production,
+        })
+        .then((result) => {
+          if (result && result.message) {
+            this.silent_print_config = result.message;
+          }
+        })
+        .catch((err) => console.error("KDS: failed to fetch silent print config:", err));
+    },
+    silentPrintKOT(kotName, silentPrintConfig) {
+      const config = (silentPrintConfig && silentPrintConfig.custom_kds_silent_print_enabled)
+        ? silentPrintConfig
+        : this.silent_print_config;
+      if (!config || !config.custom_kds_silent_print_enabled) return;
+      if (!this.bridge || !this.bridge.isConnected()) return;
+
+      this.call
+        .post("ury_customization.ury_customization.api.silent_print.create_pdf", {
+          doctype: "URY KOT",
+          name: kotName,
+          print_format: config.custom_kds_silent_print_format || "",
+        })
+        .then((result) => {
+          if (result.message) {
+            this.bridge.send({
+              type: config.custom_kds_silent_print_type || "DEFAULT",
+              url: kotName + ".pdf",
+              file_content: result.message,
+              qty: 1,
+            });
+            console.log("KDS: silent print sent for", kotName);
+          }
+        })
+        .catch((err) => console.error("KDS silent print error:", err));
+    },
+    startKotPolling() {
+      this.polling_interval = setInterval(() => {
+        if (socket && socket.connected) return;
+        const prev_names = new Set(this.known_kot_names);
+        this.fetchKOT().then(() => {
+          this.kot.forEach((k) => {
+            if (!prev_names.has(k.name)) {
+              this.silentPrintKOT(k.name, null);
+            }
+          });
+          this.known_kot_names = new Set(this.kot.map((k) => k.name));
+        });
+      }, 10000);
+    },
   },
   mounted() {
     window.addEventListener("online", this.handleOnline);
@@ -566,9 +673,13 @@ export default {
     window.addEventListener("resize", this.masonryLoading());
     this.masonryLoading();
 
+    this.initBridge();
+    this.fetchSilentPrintConfig();
     this.auth()
       .then(() => {
         self.fetchKOT().then(() => {
+          this.known_kot_names = new Set(this.kot.map((k) => k.name));
+          this.startKotPolling();
           if (this.audio_alert === 1) {
             this.showAudioAlertMessage = true;
           }
@@ -596,6 +707,7 @@ export default {
               }
             },1500)
             localStorage.setItem("kot_time", doc.kot.time);
+            this.silentPrintKOT(doc.kot.name, doc.silent_print);
           });
         });
       })
@@ -609,6 +721,12 @@ export default {
     window.removeEventListener("online", this.handleOnline);
     window.removeEventListener("offline", this.handleOffline);
     document.removeEventListener("click", this.hideAudioAlertMessage);
+    if (this.polling_interval) {
+      clearInterval(this.polling_interval);
+    }
+    if (this.bridge) {
+      this.bridge.disconnect();
+    }
   },
   computed: {
     sortedKotItems() {

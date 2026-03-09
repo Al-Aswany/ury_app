@@ -94,9 +94,30 @@ class URYKOT(Document):
         cache_key = "{}_{}_last_kot_time".format(currentBranch, production)
         time = frappe.cache().get_value(cache_key)
         kot_channel = "{}_{}_{}".format("kot_update", currentBranch, production)
+
+        silent_print_config = {}
+        if self.production:
+            prod = frappe.db.get_value(
+                "URY Production Unit",
+                self.production,
+                [
+                    "custom_kds_silent_print_enabled",
+                    "custom_kds_silent_print_type",
+                    "custom_kds_silent_print_format",
+                ],
+                as_dict=True,
+            )
+            if prod:
+                silent_print_config = prod
+
         frappe.publish_realtime(
             kot_channel,
-            {"kot": kotjson, "audio_file": audio_file, "last_kot_time": time},
+            {
+                "kot": kotjson,
+                "audio_file": audio_file,
+                "last_kot_time": time,
+                "silent_print": silent_print_config,
+            },
         )
         frappe.cache().set_value(cache_key, self.time)
 
